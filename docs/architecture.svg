@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1240" height="940" viewBox="0 0 1240 940" font-family="DejaVu Sans, Helvetica, Arial, sans-serif">
+<rect width="1240" height="940" fill="#ffffff"/>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#6c757d"/></marker></defs>
+<text x="620" y="40" text-anchor="middle" font-size="24" font-weight="bold" fill="#212529">codyssey B6-1  —  VPC / EC2 web service</text>
+<rect x="455" y="62" width="330" height="62" rx="10" fill="#f5f6f8" stroke="#3c4048" stroke-width="2"/>
+<text x="471" y="88" font-size="15" font-weight="bold" fill="#3c4048">Internet / Client</text>
+<text x="471" y="112" font-size="13" fill="#212529">browser or curl</text>
+<rect x="70" y="62" width="300" height="62" rx="10" fill="#f5f6f8" stroke="#3c4048" stroke-width="2"/>
+<text x="86" y="88" font-size="15" font-weight="bold" fill="#3c4048">Admin laptop</text>
+<text x="86" y="112" font-size="13" fill="#212529">source IP: &lt;my IP&gt;/32</text>
+<rect x="60" y="170" width="1120" height="680" rx="10" fill="none" stroke="#007a9e" stroke-width="2" stroke-dasharray="9 6"/>
+<text x="76" y="196" font-size="15" font-weight="bold" fill="#007a9e">AWS Cloud  —  ap-northeast-2 (Seoul)</text>
+<rect x="500" y="206" width="240" height="58" rx="10" fill="#f5f6f8" stroke="#007a9e" stroke-width="2"/>
+<text x="516" y="232" font-size="15" font-weight="bold" fill="#007a9e">Internet Gateway</text>
+<rect x="100" y="300" width="1040" height="520" rx="10" fill="none" stroke="#246cbe" stroke-width="2"/>
+<text x="116" y="326" font-size="15" font-weight="bold" fill="#246cbe">VPC   10.0.0.0/16</text>
+<rect x="150" y="372" width="920" height="412" rx="10" fill="#eef8f3" stroke="#1a8d60" stroke-width="2"/>
+<text x="166" y="398" font-size="15" font-weight="bold" fill="#1a8d60">Public Subnet   10.0.1.0/24   (ap-northeast-2a)</text>
+<text x="166" y="422" font-size="13" fill="#212529">map-public-ip-on-launch: true</text>
+<rect x="180" y="452" width="330" height="104" rx="10" fill="#ffffff" stroke="#1a8d60" stroke-width="2"/>
+<text x="196" y="478" font-size="15" font-weight="bold" fill="#1a8d60">Route Table</text>
+<text x="196" y="502" font-size="13" fill="#212529">0.0.0.0/0      →  Internet Gateway</text>
+<text x="196" y="524" font-size="13" fill="#212529">10.0.0.0/16   →  local</text>
+<rect x="560" y="452" width="480" height="300" rx="10" fill="#fdf4ec" stroke="#c45818" stroke-width="2"/>
+<text x="576" y="478" font-size="15" font-weight="bold" fill="#c45818">Security Group   (inbound)</text>
+<text x="576" y="502" font-size="13" fill="#212529">tcp 80  ←  0.0.0.0/0</text>
+<text x="576" y="524" font-size="13" fill="#212529">tcp 22  ←  &lt;my IP&gt;/32</text>
+<text x="576" y="546" font-size="13" fill="#212529">no all-ports rule</text>
+<rect x="592" y="574" width="420" height="156" rx="10" fill="#ffffff" stroke="#3c4048" stroke-width="2"/>
+<text x="608" y="600" font-size="15" font-weight="bold" fill="#3c4048">EC2   t3.micro   (public IP)</text>
+<text x="608" y="624" font-size="13" fill="#212529">nginx :80   —   Amazon Linux 2023</text>
+<text x="608" y="646" font-size="13" fill="#212529">GET /             →  index.html</text>
+<text x="608" y="668" font-size="13" fill="#212529">GET /health   →  200  "OK"</text>
+<text x="608" y="690" font-size="13" fill="#212529">root EBS gp3 8 GiB (DeleteOnTermination)</text>
+<polyline points="620,124 620,204" fill="none" stroke="#6c757d" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="634" y="150" text-anchor="start" font-size="13" fill="#6c757d">HTTP  :80</text>
+<polyline points="620,264 620,410 900,410 900,572" fill="none" stroke="#6c757d" stroke-width="2" marker-end="url(#arrow)"/>
+<polyline points="220,124 220,148 118,148 118,648 590,648" fill="none" stroke="#6c757d" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+<text x="360" y="636" text-anchor="middle" font-size="13" fill="#6c757d">SSH  :22   (source-restricted)</text>
+<polyline points="1012,652 1105,652 1105,235 742,235" fill="none" stroke="#6c757d" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+<text x="1092" y="470" text-anchor="end" font-size="13" fill="#6c757d">outbound</text>
+<text x="620" y="894" text-anchor="middle" font-size="13" fill="#6c757d">External request:  Internet  →  Internet Gateway  →  Public Subnet (route 0.0.0.0/0)  →  Security Group  →  EC2 nginx :80</text>
+<text x="620" y="916" text-anchor="middle" font-size="13" fill="#6c757d">Outbound (dashed):  EC2  →  route 0.0.0.0/0  →  Internet Gateway  →  Internet     |     SSH is allowed only from the admin IP.</text>
+</svg>

@@ -1,0 +1,5 @@
+# 실습 중 만들어지는 로컬 산출물
+infra/.state
+*.pem
+__pycache__/
+*.py[cod]
