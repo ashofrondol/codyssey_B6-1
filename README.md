@@ -412,7 +412,7 @@ AWS 에서 **VPC 로 격리된 네트워크를 직접 설계**하고, Public Sub
 | R4-2 | 권한을 EC2/VPC/SG 범위로 제한 | ✅ 충족 | `iam/codyssey-b6-1-policy.json` 전체 — 개별 액션 나열(`:19-35`, `:46-51`, `:62-69`), `s3:*`/`rds:*`/`lambda:*` 없음, `iam:CreateUser`·`AttachUserPolicy` 등 **권한 상승 경로 없음**, `ssm:GetParameter` 는 AMI 경로로 ARN 한정(`:83-86`), 대부분 Statement 에 `aws:RequestedRegion=ap-northeast-2` 조건 |
 | R4-3 | AdministratorAccess 미부여 | ✅ 충족 | 정책 문서에 관리자 권한 없음(`iam/codyssey-b6-1-policy.json` 전문), `iam/README.md:4`, 런타임 확인 `infra/04_verify.sh:103-109` (B6-1-I5) |
 | R5-1 | 외부 접속 증명 (A 또는 B) | ❌ 미충족 | **증빙이 하나도 없다.** `docs/screenshots/` 에는 `README.md`(무엇을 찍을지 안내)만 있고 이미지 0장, `docs/verification.txt` 없음, `infra/.state` 없음. 검증 로직(`infra/04_verify.sh:116-124`)은 있으나 **실행 결과가 남아 있지 않다** |
-| R5-2 | 선택한 방식(A/B)을 README 에 명시 | 🟡 부분 충족 | 방식 명시는 됨 — `README.md:112` "**선택한 방식: (B) 헬스체크**", 선택 이유도 `:114-117`. 그러나 **접속 정보가 플레이스홀더** — `README.md:121` `` `<배포 후 채우기 — infra/.state 의 PUBLIC_IP>` ``, `:122-123` `http://<퍼블릭IP>/`. 제출 최소 규격은 "접속 정보(URL 또는 IP) 기재"를 함께 요구한다 |
+| R5-2 | 선택한 방식(A/B)을 README 에 명시 | 🟡 부분 충족 | 방식 명시는 됨 — `README.md:656` "**선택한 방식: (B) 헬스체크**", 선택 이유도 `:114-117`. 그러나 **접속 정보가 플레이스홀더** — `README.md:665` `` `<배포 후 채우기 — infra/.state 의 PUBLIC_IP>` ``, `:122-123` `http://<퍼블릭IP>/`. 제출 최소 규격은 "접속 정보(URL 또는 IP) 기재"를 함께 요구한다 |
 | R6-1 | 정리 후 체크리스트에 "종료/삭제 완료" 근거 | ❌ 미충족 | 체크리스트 골격과 자동화는 있으나(`infra/99_cleanup.sh`, `docs/cleanup-checklist.md`) **근거가 비어 있다** — `docs/cleanup-checklist.md:69-83` 은 "(정리 실행 결과를 여기에 붙인다 — **예시**)" 블록, `:85` 정리 날짜 `(YYYY-MM-DD)`, `:86` 확인한 사람 `(이름)`, 1·2절 체크박스 **전부 `☐`** |
 | R6-2 | EC2·EBS·EIP·IGW·VPC 정리 완료 확인 | 🟡 부분 충족 | 항목과 확인 명령은 5종 모두 정의됨 — `docs/cleanup-checklist.md:25-29`; 자동 잔여 확인도 5종 + Subnet/RTB/NAT 까지 조회 — `infra/99_cleanup.sh:120-136`(잔여 있으면 종료 코드 1, `:145`). 다만 **"확인했다"는 결과가 기록돼 있지 않다** |
 
@@ -421,7 +421,7 @@ AWS 에서 **VPC 로 격리된 네트워크를 직접 설계**하고, Public Sub
 | 제출물 | 규격 | 판정 | 근거 |
 | --- | --- | --- | --- |
 | 1. 아키텍처 다이어그램 | `docs/architecture.(png\|pdf)`, VPC/Subnet/IGW/EC2/SG **5요소 + 트래픽 흐름** | ✅ 충족 | `docs/architecture.png`(2480×1880, 이미지 직접 열람) — 5요소 전부 + `Internet → IGW → Public Subnet(route 0.0.0.0/0) → SG → EC2 nginx:80` 흐름과 아웃바운드 점선, SSH 경로까지 표기. **SG 를 인스턴스 경계에, IGW 를 VPC 밖 경계에** 정확히 그렸다. 재현 가능한 생성기 `docs/build_architecture.py`, 벡터본 `docs/architecture.svg` |
-| 2. 외부 접속 증빙 | README 에 방식·접속정보 + **스크린샷 1장 이상** | ❌ 미충족 | 방식만 명시(`README.md:112`). IP 플레이스홀더(`:121`), 스크린샷 0장(`docs/screenshots/` 에 README 만) |
+| 2. 외부 접속 증빙 | README 에 방식·접속정보 + **스크린샷 1장 이상** | ❌ 미충족 | 방식만 명시(`README.md:656`). IP 플레이스홀더(`:121`), 스크린샷 0장(`docs/screenshots/` 에 README 만) |
 | 3. 트러블슈팅 보고서 | `docs/troubleshooting.md`, 1건 이상 **6단계 전부** | 🟡 부분 충족 | 3건 작성, 증상·가설·검증·조치·재발방지는 실명령 수준으로 충실(`docs/troubleshooting.md:12-56`, `:59-72`, `:76-89`). 그러나 **6단계 중 `결과` 가 3건 모두 `(실행 후 채우기)`**(`:20`, `:67`, `:84`)이고 실행 로그 블록도 공란(`:54`, `:71`, `:88`). 문서 스스로 `:3-8` 에서 미완성임을 밝히고 있다 |
 | 4. 리소스 정리 체크리스트 | `docs/cleanup-checklist.md` 1개 | ✅ 충족(파일 규격) / 🟡 내용 | 파일명·경로 규격 일치. 필수 5종 + 조건부(NAT/ELB/RDS/키페어/SG) + Billing 확인까지 포함(`docs/cleanup-checklist.md:21-58`). 단 4절 결과 기록은 공란(R6-1 참조) |
 
@@ -442,8 +442,8 @@ AWS 에서 **VPC 로 격리된 네트워크를 직접 설계**하고, Public Sub
 
 | ID | 요구사항 (요약) | 판정 | 근거 / 비고 |
 | --- | --- | --- | --- |
-| B1 | 도메인 연결 + Let's Encrypt HTTPS | ❌ 미충족 | `README.md:272-273` "HTTPS 적용 — **미구현**". SG 에 443 규칙 없음(`infra/02_security_group.sh:56-57`), 정책에도 관련 권한 없음. 선택 과제이므로 감점 사유는 아니다 |
-| B2 | EC2 안에 Docker 설치 + 컨테이너 배포 | ❌ 미충족 | `README.md:274` "Docker 배포 — **미구현**". `infra/user-data.sh` 는 nginx 를 **패키지로** 설치한다(`:14-25`). 저장소 전체에 `docker` 실행 코드 없음 |
+| B1 | 도메인 연결 + Let's Encrypt HTTPS | ❌ 미충족 | `README.md:816-273` "HTTPS 적용 — **미구현**". SG 에 443 규칙 없음(`infra/02_security_group.sh:56-57`), 정책에도 관련 권한 없음. 선택 과제이므로 감점 사유는 아니다 |
+| B2 | EC2 안에 Docker 설치 + 컨테이너 배포 | ❌ 미충족 | `README.md:818` "Docker 배포 — **미구현**". `infra/user-data.sh` 는 nginx 를 **패키지로** 설치한다(`:14-25`). 저장소 전체에 `docker` 실행 코드 없음 |
 | B2-1 | 내부 `curl http://localhost` 200 | ❌ 미충족 | B2 미선택. (nginx 경로의 내부 검증은 R2-4 참조) |
 | B2-2 | 외부 접속/`/health` 200 | ❌ 미충족 | B2 미선택 |
 | B2-3 | README 에 이미지명·실행 방식·포트 매핑 | ❌ 미충족 | README 에 컨테이너 이미지/포트 매핑 기술 없음 |
@@ -476,7 +476,7 @@ AWS 에서 **VPC 로 격리된 네트워크를 직접 설계**하고, Public Sub
    겪지 않은 사례는 문서 머리말(`:7`)의 지시대로 지우는 편이 "6단계 완비" 판정에 유리하다.
 
 4. **[중요] R5-2 — 접속 정보(URL/IP) 미기재.**
-   무엇이 부족한가: 방식 (B) 는 명시됐으나(`README.md:112`) IP 가 플레이스홀더(`:121-123`).
+   무엇이 부족한가: 방식 (B) 는 명시됐으나(`README.md:656`) IP 가 플레이스홀더(`:121-123`).
    어떻게 고치나: 배포 후 `infra/.state` 의 `PUBLIC_IP` 값을 표에 채우고,
    `curl -i` 실제 응답(`:126-133` 의 예시 블록)을 실제 출력으로 교체한다.
 
