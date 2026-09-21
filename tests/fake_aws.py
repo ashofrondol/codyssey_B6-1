@@ -96,6 +96,28 @@ SG_RULES = [
     },
 ]
 
+#: `$FAKE_AWS_SG` 로 고르는 보안 그룹 응답.
+#: 04_verify.sh 가 **위반을 만났을 때** 어떻게 합계를 내는지도 테스트해야 하는데,
+#: 그러려면 규칙이 어긋난 계정을 흉내낼 수 있어야 한다.
+SG_VARIANTS = {
+    "good": SG_RULES,
+    "open-ssh": [
+        SG_RULES[0],
+        {
+            "IpProtocol": "tcp", "FromPort": 22, "ToPort": 22,
+            "IpRanges": [{"CidrIp": "0.0.0.0/0", "Description": "SSH-WIDE-OPEN"}],
+        },
+    ],
+}
+
+
+def sg_rules():
+    name = os.environ.get("FAKE_AWS_SG", "good")
+    if name not in SG_VARIANTS:
+        sys.stderr.write(f"fake-aws: 모르는 FAKE_AWS_SG 값: {name}\n")
+        raise SystemExit(2)
+    return SG_VARIANTS[name]
+
 
 def option(argv, name):
     """`--name value` 의 value 를 돌려준다. 없으면 None."""
@@ -134,7 +156,7 @@ def main(argv) -> int:
 
     if output == "json":
         if "IpPermissions" in query:
-            print(json.dumps(SG_RULES))
+            print(json.dumps(sg_rules()))
         else:
             print("{}")
         return 0

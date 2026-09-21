@@ -9,8 +9,11 @@ AWS 계정 없이 도는 테스트다. `tests/fake_aws.py` 를 `aws` 라는 이�
 
 from __future__ import annotations
 
+import ast
+import glob
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -86,7 +89,7 @@ class InfraTestCase(unittest.TestCase):
     def tearDown(self):
         self.tmp.cleanup()
 
-    def run_script(self, name, *args, env_extra=None, seed_state=None):
+    def run_script(self, name, *args, env_extra=None, seed_state=None, infra_dir=None):
         # 호출 로그는 실행마다 비운다. 한 테스트에서 두 번 돌려도 서로 섞이지 않는다.
         open(self.log, "w", encoding="utf-8").close()
         if seed_state:
@@ -106,7 +109,7 @@ class InfraTestCase(unittest.TestCase):
         env.update(env_extra or {})
 
         proc = subprocess.run(
-            ["bash", os.path.join(INFRA, name), *args],
+            ["bash", os.path.join(infra_dir or INFRA, name), *args],
             capture_output=True, text=True, env=env, cwd=REPO, timeout=60,
             stdin=subprocess.DEVNULL,
         )
@@ -358,6 +361,106 @@ class TestCleanup(InfraTestCase):
         self.assertEqual([c for c in run.calls if "terminate-instances" in c], [])
 
 
+SUMMARY_RE = re.compile(r"결과: PASS (\d+) / FAIL (\d+) / SKIP (\d+)")
+
+
+def verdict_counts(stdout):
+    """실제로 찍힌 `[PASS]/[FAIL]/[SKIP]` 줄 수."""
+    lines = stdout.splitlines()
+    return tuple(sum(1 for ln in lines if ln.startswith(f"[{tag}] ")) for tag in ("PASS", "FAIL", "SKIP"))
+
+
+def summary_counts(stdout):
+    """마지막 요약 줄이 주장하는 수."""
+    match = SUMMARY_RE.search(stdout)
+    assert match, f"요약 줄이 없다:\n{stdout}"
+    return tuple(int(g) for g in match.groups())
+
+
+class TestVerify(InfraTestCase):
+    """04_verify.sh — 판정 줄과 합계가 어긋나지 않는가.
+
+    AWS 도 네트워크도 쓰지 않는다. `aws` 와 `curl` 을 둘 다 PATH 앞에서 가로챈다.
+    키 파일을 만들지 않으므로 SSH 검증은 SKIP 경로로 들어간다.
+    """
+
+    SEED = {
+        "VPC_ID": "vpc-0fake0001", "SUBNET_ID": "subnet-0fake0001",
+        "IGW_ID": "igw-0fake0001", "RTB_ID": "rtb-0fake0001",
+        "RTB_ASSOC_ID": "rtbassoc-0fake0001", "SG_ID": "sg-0fake0001",
+        "INSTANCE_ID": "i-0fake0001", "PUBLIC_IP": "203.0.113.25",
+        "SSH_USER": "ec2-user",
+    }
+
+    def setUp(self):
+        super().setUp()
+        curl = os.path.join(self.bin_dir, "curl")
+        with open(curl, "w", encoding="utf-8") as fp:
+            fp.write(
+                "#!/bin/sh\n"
+                "# 가짜 curl — 네트워크로 나가지 않는다.\n"
+                "case \" $* \" in\n"
+                "  *'%{http_code}'*) printf '200' ;;\n"
+                "  *)                printf 'OK\\n' ;;\n"
+                "esac\n"
+            )
+        os.chmod(curl, 0o755)
+        # 부속 작업(IGW 연결·기본 경로·서브넷 연결)이 이미 끝난 계정을 흉내낸다
+        with open(self.fake_state, "w", encoding="utf-8") as fp:
+            json.dump(["igw-attached", "default-route", "rtb-associated"], fp)
+
+    def verify(self, **env_extra):
+        return self.run_script("04_verify.sh", seed_state=self.SEED, env_extra=env_extra or None)
+
+    def test_합계가_실제로_찍힌_판정_줄_수와_같다(self):
+        """이 저장소가 예전에 grep 으로 세던 바로 그 수다.
+
+        문구가 바뀌어도, 판정이 늘어나도 이 등식은 깨지면 안 된다.
+        """
+        run = self.verify()
+        self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
+        self.assertEqual(verdict_counts(run.stdout), summary_counts(run.stdout), run.stdout)
+
+    def test_보안그룹_판정_4개가_합계에_들어간다(self):
+        run = self.verify()
+        for req in ("B6-1-S1", "B6-1-S2", "B6-1-S3", "B6-1-S4"):
+            self.assertIn(f"[PASS] {req}", run.stdout, run.stdout)
+        self.assertGreaterEqual(verdict_counts(run.stdout)[0], 4)
+
+    def test_SSH_검증은_건너뛴_것으로_센다(self):
+        """건너뛴 항목이 PASS 로 둔갑하지 않아야 한다."""
+        run = self.verify()
+        self.assertEqual(verdict_counts(run.stdout)[2], summary_counts(run.stdout)[2])
+        self.assertGreater(summary_counts(run.stdout)[2], 0, run.stdout)
+
+    def test_보안그룹_위반이_합계와_종료_코드에_그대로_반영된다(self):
+        run = self.verify(FAKE_AWS_SG="open-ssh")
+        self.assertNotEqual(run.returncode, 0, run.stdout)
+        counted = verdict_counts(run.stdout)
+        self.assertEqual(counted, summary_counts(run.stdout), run.stdout)
+        self.assertGreater(counted[1], 0, run.stdout)
+
+    def test_check_sg_가_집계를_안_남기면_멈춘다(self):
+        """계약을 어긴 check_sg.py 를 끼워 넣어 본다.
+
+        예전 방식(출력을 grep)이었다면 PASS 로 세어져 합계만 조용히 부풀었다.
+        지금은 집계 파일이 비었다는 이유로 즉시 멈춰야 한다.
+        """
+        broken_infra = os.path.join(self.tmp.name, "infra")
+        shutil.copytree(INFRA, broken_infra)
+        with open(os.path.join(broken_infra, "check_sg.py"), "w", encoding="utf-8") as fp:
+            fp.write(
+                "#!/usr/bin/env python3\n"
+                "# 계약 위반: 화면에는 PASS 를 찍지만 --tally-file 에는 아무것도 쓰지 않는다\n"
+                "print('[PASS] B6-1-S1      아무 말')\n"
+            )
+        run = self.run_script(
+            "04_verify.sh", seed_state=self.SEED, infra_dir=broken_infra,
+        )
+        self.assertNotEqual(run.returncode, 0, run.stdout)
+        self.assertIn("계약", run.stdout + run.stderr)
+
+
 class TestScriptHygiene(unittest.TestCase):
     """스크립트 자체의 성질 — 문법, 안전 옵션, 리전 고정."""
 
@@ -378,8 +481,6 @@ class TestScriptHygiene(unittest.TestCase):
         self.assertIn("AWS_REGION:=ap-northeast-2", source)
 
     def test_자격_증명이나_계정_ID_가_박혀_있지_않다(self):
-        import re
-
         secret = re.compile(r"AKIA[0-9A-Z]{16}|aws_secret_access_key\s*=")
         for name in self.SCRIPTS:
             text = read(INFRA, name)
@@ -402,14 +503,102 @@ class TestScriptHygiene(unittest.TestCase):
         self.assertNotIn("PASS + 4", text, "판정 항목 수가 바뀌면 합계만 조용히 어긋난다")
         self.assertIn("SG_PASS", text)
 
+    def test_판정_줄을_찍는_곳이_세_함수뿐이다(self):
+        """같은 printf 가 흩어져 있으면 한 곳만 고쳐도 아무도 모른다."""
+        text = read(INFRA, "04_verify.sh")
+        for tag in ("PASS", "FAIL", "SKIP"):
+            needle = f"[{tag}] %-12s"
+            self.assertEqual(
+                text.count(needle), 1,
+                f"'{needle}' 형식이 {text.count(needle)} 곳에 있다 — pass()/fail()/skip() 로 모아라",
+            )
+
+    def test_보안그룹_집계를_출력_문자열에서_세지_않는다(self):
+        """check_sg.py 와의 계약이 grep 이면, 문구가 바뀌는 순간 합계가 조용히 어긋난다."""
+        text = read(INFRA, "04_verify.sh")
+        self.assertNotIn("grep -c", text, "판정 건수를 사람이 읽는 출력에서 세고 있다")
+        self.assertIn("--tally-file", text, "집계를 명시적인 계약으로 주고받아야 한다")
+        self.assertIn("--tally-file", read(INFRA, "check_sg.py"))
+
+    def test_case_문마다_기본_분기가_있다(self):
+        """`*)` 가 없으면 모르는 입력이 아무 일도 안 하고 성공 종료한다."""
+        block_re = re.compile(r"\bcase\b.*?\besac\b", re.S)
+        default_re = re.compile(r"(?:;;|\bin\b)\s*\(?\s*\*\)")
+        checked = 0
+        for name in self.SCRIPTS + ["user-data.sh"]:
+            for block in block_re.findall(read(INFRA, name)):
+                checked += 1
+                self.assertRegex(
+                    block, default_re,
+                    f"{name}: 기본 분기 *) 가 없는 case — {block.splitlines()[0]}",
+                )
+        self.assertGreater(checked, 0, "case 문을 하나도 못 찾았다 — 검사 자체가 고장났다")
+
+    def test_모든_셸_스크립트가_안전_옵션을_켠다(self):
+        """직접 켜거나, 켜 둔 00_env.sh 를 source 하거나 둘 중 하나여야 한다.
+
+        `source` 를 **실제로 하는지** 본다. 파일 이름이 어딘가에 적혀 있기만 해도
+        통과하면(주석에 적어도 통과한다) 이 검사는 아무것도 막지 못한다.
+        """
+        for name in self.SCRIPTS + ["user-data.sh"]:
+            text = read(INFRA, name)
+            sets_options = re.search(r"^set -eu[a-z]*o pipefail$", text, re.M) is not None
+            sources_env = re.search(r"^(?:source|\.) .*00_env\.sh", text, re.M) is not None
+            self.assertTrue(sets_options or sources_env, f"{name} 이 실패를 삼킨다")
+
     def test_검증_스크립트가_모든_요구사항_ID_를_다룬다(self):
         text = read(INFRA, "04_verify.sh")
         text += read(INFRA, "check_sg.py")
-        for req in ["B6-1-N1", "B6-1-N2", "B6-1-N3", "B6-1-N4", "B6-1-N5",
+        for req in ["B6-1-N1", "B6-1-N2", "B6-1-N3", "B6-1-N4", "B6-1-N5", "B6-1-N6",
                     "B6-1-E1", "B6-1-E2", "B6-1-E3", "B6-1-E4",
                     "B6-1-S1", "B6-1-S2", "B6-1-S3", "B6-1-S4",
                     "B6-1-I5", "B6-1-C3", "B6-1-X2", "B6-1-X3"]:
             self.assertIn(req, text, f"04_verify.sh 가 {req} 를 검증하지 않는다")
+
+
+class TestPythonDependencies(unittest.TestCase):
+    """파이썬 코드가 표준 라이브러리만 쓰는가.
+
+    `pyproject.toml` 이 `dependencies = []` 라고 선언해 두었지만, 선언은 아무것도
+    막지 못한다. 누가 `import boto3` 한 줄을 넣으면 채점자의 `python3 -m pytest -q`
+    가 ImportError 로 죽고, 그때서야 "설치할 것이 없다"는 README 의 약속이 거짓이
+    된다. 그래서 선언이 아니라 **검사**로 둔다.
+
+    `docs/build_architecture.py` 는 제외한다 — 다이어그램을 다시 그릴 때만 쓰는
+    보조 도구이고, matplotlib/Pillow 를 **없으면 건너뛰도록** 감싸서 쓴다.
+    산출물·테스트 경로에는 들어오지 않는다.
+    """
+
+    #: 이 저장소가 쓰는 표준 라이브러리. 늘어나면 여기에 적는다(그게 기록이다).
+    ALLOWED = {
+        "__future__", "ast", "glob", "ipaddress", "json", "os", "re",
+        "shutil", "subprocess", "sys", "tempfile", "unittest",
+    }
+
+    def test_infra_와_tests_는_표준_라이브러리만_쓴다(self):
+        files = sorted(glob.glob(os.path.join(INFRA, "*.py"))
+                       + glob.glob(os.path.join(HERE, "*.py")))
+        self.assertTrue(files, "검사할 .py 를 하나도 못 찾았다 — 검사 자체가 고장났다")
+
+        # 같은 폴더의 형제 모듈(check_sg, fake_aws …)은 외부 의존성이 아니다.
+        local = {os.path.splitext(os.path.basename(f))[0] for f in files}
+
+        for path in files:
+            tree = ast.parse(open(path, encoding="utf-8").read(), filename=path)
+            for node in ast.walk(tree):
+                if isinstance(node, ast.Import):
+                    names = [alias.name for alias in node.names]
+                elif isinstance(node, ast.ImportFrom) and node.level == 0 and node.module:
+                    names = [node.module]
+                else:
+                    continue
+                for name in names:
+                    top = name.split(".")[0]
+                    self.assertIn(
+                        top, self.ALLOWED | local,
+                        f"{os.path.relpath(path, REPO)}:{node.lineno} 이 외부 패키지"
+                        f" '{top}' 을 import 한다 — pyproject.toml 은 의존성 0 을 선언한다",
+                    )
 
 
 if __name__ == "__main__":

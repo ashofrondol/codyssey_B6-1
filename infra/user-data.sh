@@ -7,7 +7,7 @@
 #   3. GET /health      → 200 + 고정 응답(과제 외부 접속 검증 방식 B)
 #
 # 로그: /var/log/cloud-init-output.log
-set -eux
+set -euxo pipefail
 
 HEALTH_BODY="__HEALTH_BODY__"
 

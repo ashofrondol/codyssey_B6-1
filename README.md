@@ -398,30 +398,30 @@ AWS 에서 **VPC 로 격리된 네트워크를 직접 설계**하고, Public Sub
 | R1-1 | VPC 1개 생성 | ⬜ 로컬 검증 불가 | `infra/01_network.sh:27-32` `create-vpc --cidr-block 10.0.0.0/16` + 추적 태그. 증거 충분(스크립트·테스트·다이어그램), 단 **실제 생성 증적 없음** |
 | R1-2 | Public Subnet 1개 생성 | ⬜ 로컬 검증 불가 | `infra/01_network.sh:44-51` `create-subnet 10.0.1.0/24 (ap-northeast-2a)`, `:58-59` `--map-public-ip-on-launch`. 증거 충분 |
 | R1-3 | IGW 를 VPC 에 연결 | ⬜ 로컬 검증 불가 | `infra/01_network.sh:64-80` — 생성 후 `describe` 로 연결 상태를 매번 조회해 없으면 `attach-internet-gateway`. 증거 충분 |
-| R1-4 | Route Table 에 `0.0.0.0/0` → IGW | ⬜ 로컬 검증 불가 | `infra/01_network.sh:97-106` `create-route`, `:108-117` **서브넷 associate 까지** 처리(명세가 명시하지 않은 3번째 단계). `infra/04_verify.sh:62-69` 가 재확인. 증거 충분 |
-| R1-5 | 인스턴스 아웃바운드 (`curl https://example.com`) | ⬜ 로컬 검증 불가 | `infra/04_verify.sh:144-147` 이 SSH 로 들어가 `curl https://example.com` 200 을 판정(B6-1-N5). 검증 **로직**은 있으나 **실행 출력이 저장소에 없다** |
+| R1-4 | Route Table 에 `0.0.0.0/0` → IGW | ⬜ 로컬 검증 불가 | `infra/01_network.sh:97-106` `create-route`, `:108-117` **서브넷 associate 까지** 처리(명세가 명시하지 않은 3번째 단계). `infra/04_verify.sh` 의 `B6-1-N4`(기본 경로)·`B6-1-N6`(서브넷 연결) 검사가 재확인. 증거 충분 |
+| R1-5 | 인스턴스 아웃바운드 (`curl https://example.com`) | ⬜ 로컬 검증 불가 | `infra/04_verify.sh` 의 `B6-1-N5` 검사가 SSH 로 들어가 `curl https://example.com` 200 을 판정(B6-1-N5). 검증 **로직**은 있으나 **실행 출력이 저장소에 없다** |
 | R2-1 | Public Subnet 에 EC2 1대 | ⬜ 로컬 검증 불가 | `infra/03_instance.sh:57-69` `run-instances --instance-type t3.micro --subnet-id ... --block-device-mappings VolumeSize=8,gp3,DeleteOnTermination=true`. 프리티어·8GiB 규격 일치 |
-| R2-2 | SSH 로 접속 가능 | ⬜ 로컬 검증 불가 | 키페어 `infra/03_instance.sh:17-28`(`umask 077` + `chmod 400`), SG 22 규칙 `infra/02_security_group.sh:57`, 접속 판정 `infra/04_verify.sh:131-136`. 증거 충분, 실행 로그 없음 |
-| R2-3 | 웹 서버(Nginx) 설치·실행 상태 | ⬜ 로컬 검증 불가 | `infra/user-data.sh:14-25`(dnf/apt 분기 설치), `:66-68` `nginx -t` → `systemctl enable` → `restart`. 재부팅 후 자동 기동까지 처리. 판정은 `infra/04_verify.sh:140-142` (B6-1-E3) |
-| R2-4 | 인스턴스에서 `curl http://localhost` 200 | ⬜ 로컬 검증 불가 | `infra/user-data.sh:71-77` 부팅 직후 자기 점검 로그, `infra/04_verify.sh:134-138` (B6-1-E4). **실행 결과물 없음** |
-| R3-1 | 인바운드는 필요한 포트만 | ✅ 충족 | `infra/02_security_group.sh:56-57` — 추가하는 규칙이 tcp/80, tcp/22 **둘뿐**. `infra/check_sg.py:44-48,69-70` 가 그 외 공개 포트를 검출 |
-| R3-2 | HTTP(80) ← `0.0.0.0/0` | ✅ 충족 | `infra/02_security_group.sh:56` `add_rule 80 "0.0.0.0/0"`; `infra/check_sg.py:50-51,55-56` 가 80 미개방을 FAIL 처리 |
-| R3-3 | SSH(22) ← 내 IP 만 | ✅ 충족 | `infra/02_security_group.sh:17-27`(`0.0.0.0/0` 이면 **실행 거부**), `:57` `add_rule 22 "$SSH_CIDR"`, `infra/00_env.sh:92-97` `my_ip()` 자동 감지 → `/32`. `infra/check_sg.py:52-53,60-67` 가 /24 보다 넓은 대역도 FAIL |
-| R3-4 | `0.0.0.0/0` 전체 포트(0-65535) 규칙 금지 | ✅ 충족 | `infra/check_sg.py:40-46` — 전체 프로토콜(`-1`), 0-65535, **22 를 포함하는 범위(예: 22-80)** 까지 잡는다. 생성 직후(`02:65-66`)와 최종 검증(`04:85`) 두 번 판정 |
-| R4-1 | 실습용 IAM 사용자/Role 1개 | ⬜ 로컬 검증 불가 | `iam/README.md:3,10-13` 에 "이 정책 **하나만** 붙인다" + 생성 절차. `infra/00_env.sh:67-68`, `infra/04_verify.sh:96-100` 이 루트 사용을 FAIL 처리. **실제 사용자 존재 증빙(콘솔 캡처)은 없음** |
+| R2-2 | SSH 로 접속 가능 | ⬜ 로컬 검증 불가 | 키페어 `infra/03_instance.sh:17-28`(`umask 077` + `chmod 400`), SG 22 규칙 `infra/02_security_group.sh` 의 `add_rule 22 "$SSH_CIDR"`, 접속 판정 `infra/04_verify.sh` 의 `B6-1-E2` 검사. 증거 충분, 실행 로그 없음 |
+| R2-3 | 웹 서버(Nginx) 설치·실행 상태 | ⬜ 로컬 검증 불가 | `infra/user-data.sh:14-25`(dnf/apt 분기 설치), `:66-68` `nginx -t` → `systemctl enable` → `restart`. 재부팅 후 자동 기동까지 처리. 판정은 `infra/04_verify.sh` 의 `B6-1-E3` 검사 |
+| R2-4 | 인스턴스에서 `curl http://localhost` 200 | ⬜ 로컬 검증 불가 | `infra/user-data.sh:71-77` 부팅 직후 자기 점검 로그, `infra/04_verify.sh` 의 `B6-1-E4` 검사. **실행 결과물 없음** |
+| R3-1 | 인바운드는 필요한 포트만 | ✅ 충족 | `infra/02_security_group.sh` 의 `add_rule` 호출 2건 — 추가하는 규칙이 tcp/80, tcp/22 **둘뿐**. `infra/check_sg.py` 의 `evaluate()` 가 그 외 공개 포트를 `open_ports` 로 검출 |
+| R3-2 | HTTP(80) ← `0.0.0.0/0` | ✅ 충족 | `infra/02_security_group.sh` 의 `add_rule 80 "0.0.0.0/0"`; `infra/check_sg.py` 의 `evaluate()` 가 `http_open` 이 아니면 FAIL 처리 |
+| R3-3 | SSH(22) ← 내 IP 만 | ✅ 충족 | `infra/02_security_group.sh` 의 `SSH_CIDR` 검사 `case`(`0.0.0.0/0` 이면 **실행 거부**, IPv4 CIDR 이 아닌 값도 거부), `add_rule 22 "$SSH_CIDR"`, `infra/00_env.sh:92-97` `my_ip()` 자동 감지 → `/32`. `infra/check_sg.py` 의 `evaluate()` 가 `prefixlen < 24` 인 대역도 FAIL |
+| R3-4 | `0.0.0.0/0` 전체 포트(0-65535) 규칙 금지 | ✅ 충족 | `infra/check_sg.py` 의 `evaluate()` 중 `0.0.0.0/0` 분기 — 전체 프로토콜(`-1`), 0-65535, **22 를 포함하는 범위(예: 22-80)** 까지 잡는다. 생성 직후(`02_security_group.sh` 의 「자기 점검」 절)와 최종 검증(`04_verify.sh` 의 「접근 제어(보안 그룹)」 절) 두 번 판정 |
+| R4-1 | 실습용 IAM 사용자/Role 1개 | ⬜ 로컬 검증 불가 | `iam/README.md:3,10-13` 에 "이 정책 **하나만** 붙인다" + 생성 절차. `infra/00_env.sh:67-68`, `infra/04_verify.sh` 의 `B6-1-C3` 검사가 루트 사용을 FAIL 처리. **실제 사용자 존재 증빙(콘솔 캡처)은 없음** |
 | R4-2 | 권한을 EC2/VPC/SG 범위로 제한 | ✅ 충족 | `iam/codyssey-b6-1-policy.json` 전체 — 개별 액션 나열(`:19-35`, `:46-51`, `:62-69`), `s3:*`/`rds:*`/`lambda:*` 없음, `iam:CreateUser`·`AttachUserPolicy` 등 **권한 상승 경로 없음**, `ssm:GetParameter` 는 AMI 경로로 ARN 한정(`:83-86`), 대부분 Statement 에 `aws:RequestedRegion=ap-northeast-2` 조건 |
-| R4-3 | AdministratorAccess 미부여 | ✅ 충족 | 정책 문서에 관리자 권한 없음(`iam/codyssey-b6-1-policy.json` 전문), `iam/README.md:4`, 런타임 확인 `infra/04_verify.sh:103-109` (B6-1-I5) |
-| R5-1 | 외부 접속 증명 (A 또는 B) | ❌ 미충족 | **증빙이 하나도 없다.** `docs/screenshots/` 에는 `README.md`(무엇을 찍을지 안내)만 있고 이미지 0장, `docs/verification.txt` 없음, `infra/.state` 없음. 검증 로직(`infra/04_verify.sh:116-124`)은 있으나 **실행 결과가 남아 있지 않다** |
-| R5-2 | 선택한 방식(A/B)을 README 에 명시 | 🟡 부분 충족 | 방식 명시는 됨 — `README.md:656` "**선택한 방식: (B) 헬스체크**", 선택 이유도 `:114-117`. 그러나 **접속 정보가 플레이스홀더** — `README.md:665` `` `<배포 후 채우기 — infra/.state 의 PUBLIC_IP>` ``, `:122-123` `http://<퍼블릭IP>/`. 제출 최소 규격은 "접속 정보(URL 또는 IP) 기재"를 함께 요구한다 |
+| R4-3 | AdministratorAccess 미부여 | ✅ 충족 | 정책 문서에 관리자 권한 없음(`iam/codyssey-b6-1-policy.json` 전문), `iam/README.md:4`, 런타임 확인 `infra/04_verify.sh` 의 `B6-1-I5` 검사 |
+| R5-1 | 외부 접속 증명 (A 또는 B) | ❌ 미충족 | **증빙이 하나도 없다.** `docs/screenshots/` 에는 `README.md`(무엇을 찍을지 안내)만 있고 이미지 0장, `docs/verification.txt` 없음, `infra/.state` 없음. 검증 로직(`infra/04_verify.sh` 의 `B6-1-X2`·`B6-1-X3` 검사)은 있으나 **실행 결과가 남아 있지 않다** |
+| R5-2 | 선택한 방식(A/B)을 README 에 명시 | 🟡 부분 충족 | 방식 명시는 됨 — README 「3. 외부 접속 검증」 절 머리의 "**선택한 방식: (B) 헬스체크**" 와 바로 뒤 선택 이유 문단. 그러나 **접속 정보가 플레이스홀더** — 같은 절의 표가 `` `<배포 후 채우기 — infra/.state 의 PUBLIC_IP>` `` / `http://<퍼블릭IP>/`. 제출 최소 규격은 "접속 정보(URL 또는 IP) 기재"를 함께 요구한다 |
 | R6-1 | 정리 후 체크리스트에 "종료/삭제 완료" 근거 | ❌ 미충족 | 체크리스트 골격과 자동화는 있으나(`infra/99_cleanup.sh`, `docs/cleanup-checklist.md`) **근거가 비어 있다** — `docs/cleanup-checklist.md:69-83` 은 "(정리 실행 결과를 여기에 붙인다 — **예시**)" 블록, `:85` 정리 날짜 `(YYYY-MM-DD)`, `:86` 확인한 사람 `(이름)`, 1·2절 체크박스 **전부 `☐`** |
-| R6-2 | EC2·EBS·EIP·IGW·VPC 정리 완료 확인 | 🟡 부분 충족 | 항목과 확인 명령은 5종 모두 정의됨 — `docs/cleanup-checklist.md:25-29`; 자동 잔여 확인도 5종 + Subnet/RTB/NAT 까지 조회 — `infra/99_cleanup.sh:120-136`(잔여 있으면 종료 코드 1, `:145`). 다만 **"확인했다"는 결과가 기록돼 있지 않다** |
+| R6-2 | EC2·EBS·EIP·IGW·VPC 정리 완료 확인 | 🟡 부분 충족 | 항목과 확인 명령은 5종 모두 정의됨 — `docs/cleanup-checklist.md:25-29`; 자동 잔여 확인도 5종 + Subnet/RTB/NAT 까지 조회 — `infra/99_cleanup.sh` 「10. 잔여 확인」 절의 `count_left` 호출 8건(잔여가 있으면 그 절 끝의 `die` 로 종료 코드 1). 다만 **"확인했다"는 결과가 기록돼 있지 않다** |
 
 #### 제출물 4종 (최소 규격 대조)
 
 | 제출물 | 규격 | 판정 | 근거 |
 | --- | --- | --- | --- |
 | 1. 아키텍처 다이어그램 | `docs/architecture.(png\|pdf)`, VPC/Subnet/IGW/EC2/SG **5요소 + 트래픽 흐름** | ✅ 충족 | `docs/architecture.png`(2480×1880, 이미지 직접 열람) — 5요소 전부 + `Internet → IGW → Public Subnet(route 0.0.0.0/0) → SG → EC2 nginx:80` 흐름과 아웃바운드 점선, SSH 경로까지 표기. **SG 를 인스턴스 경계에, IGW 를 VPC 밖 경계에** 정확히 그렸다. 재현 가능한 생성기 `docs/build_architecture.py`, 벡터본 `docs/architecture.svg` |
-| 2. 외부 접속 증빙 | README 에 방식·접속정보 + **스크린샷 1장 이상** | ❌ 미충족 | 방식만 명시(`README.md:656`). IP 플레이스홀더(`:121`), 스크린샷 0장(`docs/screenshots/` 에 README 만) |
+| 2. 외부 접속 증빙 | README 에 방식·접속정보 + **스크린샷 1장 이상** | ❌ 미충족 | 방식만 명시(README 「3. 외부 접속 검증」 절). IP 플레이스홀더(같은 절의 표), 스크린샷 0장(`docs/screenshots/` 에 README 만) |
 | 3. 트러블슈팅 보고서 | `docs/troubleshooting.md`, 1건 이상 **6단계 전부** | 🟡 부분 충족 | 3건 작성, 증상·가설·검증·조치·재발방지는 실명령 수준으로 충실(`docs/troubleshooting.md:12-56`, `:59-72`, `:76-89`). 그러나 **6단계 중 `결과` 가 3건 모두 `(실행 후 채우기)`**(`:20`, `:67`, `:84`)이고 실행 로그 블록도 공란(`:54`, `:71`, `:88`). 문서 스스로 `:3-8` 에서 미완성임을 밝히고 있다 |
 | 4. 리소스 정리 체크리스트 | `docs/cleanup-checklist.md` 1개 | ✅ 충족(파일 규격) / 🟡 내용 | 파일명·경로 규격 일치. 필수 5종 + 조건부(NAT/ELB/RDS/키페어/SG) + Billing 확인까지 포함(`docs/cleanup-checklist.md:21-58`). 단 4절 결과 기록은 공란(R6-1 참조) |
 
@@ -429,21 +429,21 @@ AWS 에서 **VPC 로 격리된 네트워크를 직접 설계**하고, Public Sub
 
 | 제약 | 판정 | 근거 |
 | --- | --- | --- |
-| 서울 리전(`ap-northeast-2`) 고정 | ✅ 충족 | `infra/00_env.sh:10` 기본값, `:63` `aws_()` 래퍼가 **모든 호출에 `--region` 명시**, IAM 정책의 `aws:RequestedRegion` 조건(`iam/codyssey-b6-1-policy.json:12,39,55,73`). 테스트 `tests/test_infra.py:151-155` 가 전 호출을 확인 |
-| 루트 계정 사용 금지 | ✅ 충족 | `infra/00_env.sh:67-68`, `infra/04_verify.sh:96-100` 이 ARN 이 `:root` 면 FAIL, `iam/README.md:12-13` |
+| 서울 리전(`ap-northeast-2`) 고정 | ✅ 충족 | `infra/00_env.sh:10` 기본값, `:63` `aws_()` 래퍼가 **모든 호출에 `--region` 명시**, IAM 정책의 `aws:RequestedRegion` 조건(`iam/codyssey-b6-1-policy.json:12,39,55,73`). 테스트 `tests/test_infra.py` 의 `test_모든_호출이_서울_리전을_지정한다` 가 전 호출을 확인 |
+| 루트 계정 사용 금지 | ✅ 충족 | `infra/00_env.sh:67-68`, `infra/04_verify.sh` 의 `B6-1-C3` 검사가 ARN 이 `:root` 면 FAIL, `iam/README.md:12-13` |
 | 프리티어 범위 | ✅ 충족 | `infra/00_env.sh:17-18` `t3.micro` / EBS `8` GiB, `infra/03_instance.sh:63` |
 | 키페어 1개, 안전 보관 | ✅ 충족 | `infra/03_instance.sh:18-24` `umask 077` + `chmod 400`, 테스트 `tests/test_infra.py` 가 `0o400` 확인 |
 | `0.0.0.0/0` 전체 포트 규칙 금지 / SSH 전체 개방 금지 | ✅ 충족 | 위 R3-3·R3-4 참조 (스크립트 거부 + `check_sg.py` 이중 판정) |
 | 실습 종료 후 리소스 방치 금지 | 🟡 | 정리 자동화는 완비(`infra/99_cleanup.sh`)되었으나 **실행 기록 없음** |
-| 외부 라이브러리 | ✅ 해당 없음/청결 | 모든 `.py` 가 표준 라이브러리만 import (`ipaddress`, `json`, `sys`, `os`, `subprocess`, `unittest`, `tempfile`, `shutil`) |
+| 외부 라이브러리 | ✅ 해당 없음/청결 | `infra/*.py` 와 `tests/*.py` 가 표준 라이브러리만 import 한다. 열거가 아니라 **검사**로 고정 — `tests/test_infra.py` 의 `test_infra_와_tests_는_표준_라이브러리만_쓴다` 가 두 폴더를 AST 로 훑어 허용 목록 밖의 모듈을 거부한다. `pyproject.toml` 의 `dependencies = []` 선언과 짝이다. (`docs/build_architecture.py` 는 다이어그램을 다시 그릴 때만 쓰는 보조 도구로, matplotlib/Pillow 를 **없으면 건너뛰도록** 감싸 쓴다 — 산출물·테스트 경로 밖이라 검사 대상에서 뺐다) |
 | 자격 증명 커밋 | ✅ 청결 | `.gitignore` 가 `infra/.state`, `*.pem` 제외. `tests/test_infra.py` 에 `AKIA...` 패턴 검사 존재 |
 
 #### 보너스 과제
 
 | ID | 요구사항 (요약) | 판정 | 근거 / 비고 |
 | --- | --- | --- | --- |
-| B1 | 도메인 연결 + Let's Encrypt HTTPS | ❌ 미충족 | `README.md:816-273` "HTTPS 적용 — **미구현**". SG 에 443 규칙 없음(`infra/02_security_group.sh:56-57`), 정책에도 관련 권한 없음. 선택 과제이므로 감점 사유는 아니다 |
-| B2 | EC2 안에 Docker 설치 + 컨테이너 배포 | ❌ 미충족 | `README.md:818` "Docker 배포 — **미구현**". `infra/user-data.sh` 는 nginx 를 **패키지로** 설치한다(`:14-25`). 저장소 전체에 `docker` 실행 코드 없음 |
+| B1 | 도메인 연결 + Let's Encrypt HTTPS | ❌ 미충족 | README 「10. 보너스 (선택 과제)」 절 "HTTPS 적용 — **미구현**". SG 에 443 규칙 없음(`infra/02_security_group.sh` 의 `add_rule` 호출 2건), 정책에도 관련 권한 없음. 선택 과제이므로 감점 사유는 아니다 |
+| B2 | EC2 안에 Docker 설치 + 컨테이너 배포 | ❌ 미충족 | README 「10. 보너스 (선택 과제)」 절 "Docker 배포 — **미구현**". `infra/user-data.sh` 는 nginx 를 **패키지로** 설치한다(`:14-25`). 저장소 전체에 `docker` 실행 코드 없음 |
 | B2-1 | 내부 `curl http://localhost` 200 | ❌ 미충족 | B2 미선택. (nginx 경로의 내부 검증은 R2-4 참조) |
 | B2-2 | 외부 접속/`/health` 200 | ❌ 미충족 | B2 미선택 |
 | B2-3 | README 에 이미지명·실행 방식·포트 매핑 | ❌ 미충족 | README 에 컨테이너 이미지/포트 매핑 기술 없음 |
@@ -476,14 +476,14 @@ AWS 에서 **VPC 로 격리된 네트워크를 직접 설계**하고, Public Sub
    겪지 않은 사례는 문서 머리말(`:7`)의 지시대로 지우는 편이 "6단계 완비" 판정에 유리하다.
 
 4. **[중요] R5-2 — 접속 정보(URL/IP) 미기재.**
-   무엇이 부족한가: 방식 (B) 는 명시됐으나(`README.md:656`) IP 가 플레이스홀더(`:121-123`).
-   어떻게 고치나: 배포 후 `infra/.state` 의 `PUBLIC_IP` 값을 표에 채우고,
-   `curl -i` 실제 응답(`:126-133` 의 예시 블록)을 실제 출력으로 교체한다.
+   무엇이 부족한가: 방식 (B) 는 명시됐으나(README 「3. 외부 접속 검증」 절) IP 가 플레이스홀더다.
+   어떻게 고치나: 배포 후 `infra/.state` 의 `PUBLIC_IP` 값을 그 절의 표에 채우고,
+   `curl -i` 실제 응답(바로 아래 예시 블록)을 실제 출력으로 교체한다.
 
 5. **[중요] R6-2 — 5종 "정리 완료 확인" 결과 미기록.**
    무엇이 부족한가: 항목·명령은 완비(`docs/cleanup-checklist.md:25-29`)지만 확인 결과가 없다.
    어떻게 고치나: 각 명령의 실제 빈 결과(`[]`)를 4절 로그에 함께 남긴다.
-   `infra/99_cleanup.sh:120-136` 출력이 그대로 그 증거가 된다.
+   `infra/99_cleanup.sh` 「10. 잔여 확인」 절의 출력이 그대로 그 증거가 된다.
 
 6. **[중요] R1~R2 전반 — AWS 실행 증적 자체가 없다.**
    무엇이 부족한가: `infra/.state` 없음, `docs/verification.txt` 없음, git 이력은 `init` 1건.
@@ -498,16 +498,17 @@ AWS 에서 **VPC 로 격리된 네트워크를 직접 설계**하고, Public Sub
    어떻게 고치나: IAM 사용자 권한 탭 캡처 1장(`docs/screenshots/08-iam.png`)이나
    `04_verify.sh` 의 `B6-1-I5` / `연결된 정책` 출력 줄을 증거로 남긴다.
 
-8. **[경미] `my_ip()` 가 IPv6 를 돌려주면 SSH 규칙이 조용히 실패한다.**
-   근거: `infra/00_env.sh:92-97` 이 `checkip.amazonaws.com` 결과를 그대로 쓰고,
-   `infra/02_security_group.sh:19-20` 이 `${IP}/32` 로 붙인다. IPv6 전용 회선에서는
+8. **[경미] `my_ip()` 가 IPv6 를 돌려주면 SSH 규칙이 조용히 실패한다.** → ✅ **2026-09-21 조치됨**
+   근거였던 것: `infra/00_env.sh:92-97` 이 `checkip.amazonaws.com` 결과를 그대로 쓰고,
+   `infra/02_security_group.sh` 의 `SSH_CIDR="${IP}/32"` 가 그 값을 붙인다. IPv6 전용 회선에서는
    `2001:db8::1/32` 같은 잘못된 CidrIp 가 만들어지고, `add_rule` 은 실패를 `warn` 으로
-   삼키므로(`:51-53`) 최종 오류 메시지가 "SSH(22) 인바운드 규칙이 없다"로 나와 원인이 가려진다.
-   어떻게 고치나: `my_ip()` 에서 IPv4 형식을 정규식으로 검사하고, 아니면
-   `MY_IP=` 를 직접 지정하라는 메시지로 즉시 중단한다(또는 `--ipv6` 시 `Ipv6Ranges`/`/128` 사용).
+   삼키므로 최종 오류 메시지가 "SSH(22) 인바운드 규칙이 없다"로 나와 원인이 가려졌다.
+   조치: `infra/02_security_group.sh` 의 `SSH_CIDR` 검사 `case` 에 **기본 분기 `*)`** 를 넣어
+   IPv4 CIDR 형식이 아니면 그 자리에서 `die` 한다. 두 단계 뒤가 아니라 값이 만들어진 직후에 멈춘다.
 
-> 참고(감점 아님): `infra/04_verify.sh:64` 와 `:69` 가 서로 다른 검사에 같은 ID `B6-1-N4` 를
-> 쓴다. "기본 경로"와 "서브넷 연결"은 별개 실패 지점이므로 ID 를 나누면 로그 추적이 쉬워진다.
+> 참고(감점 아님) → ✅ **2026-09-21 조치됨**: 기본 경로 검사와 서브넷 연결 검사가 같은 ID
+> `B6-1-N4` 를 쓰고 있었다. 별개 실패 지점이므로 서브넷 연결을 `B6-1-N6` 으로 분리했고,
+> `tests/test_infra.py` 의 `test_검증_스크립트가_모든_요구사항_ID_를_다룬다` 가 그 ID 를 강제한다.
 
 #### 🧪 실행 검증 기록
 
@@ -521,13 +522,14 @@ AWS 에서 **VPC 로 격리된 네트워크를 직접 설계**하고, Public Sub
    OK 04_verify.sh  OK 99_cleanup.sh  OK user-data.sh
    ```
 
-2. **단위 테스트 — 45개 전부 통과 (표준 라이브러리만 사용, 네트워크·설치 불필요)**
+2. **단위 테스트 — 55개 전부 통과 (표준 라이브러리만 사용, 네트워크·설치 불필요)**
    ```
    $ PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -t tests -v
    ...
-   Ran 45 tests in 9.897s
+   Ran 55 tests in 13.142s
    OK
    ```
+   (2026-09-21 코드 품질 보완 전에는 45개였다. 아래 「코드 품질 보완」 참고.)
    `tests/fake_aws.py` 를 `aws` 라는 이름으로 PATH 앞에 두고 `infra/*.sh` 를 **실제로 실행**한 뒤
    호출 argv 를 검사하는 구조다. 다음이 실측으로 확인됐다.
    - 모든 AWS 호출에 `--region ap-northeast-2` 가 붙는다
@@ -548,9 +550,29 @@ AWS 에서 **VPC 로 격리된 네트워크를 직접 설계**하고, Public Sub
    따라서 R1-1~R2-4, R4-1 은 "로컬 검증 불가"로 두고 저장소 내 증거(스크립트·테스트·문서)의
    충분성만 판정했다.
 
-5. **`set -e` 오판 확인.** `infra/99_cleanup.sh:103` 의 `[ -f "$KEY_FILE" ] && rm -f ... && ok ...`
+5. **`set -e` 오판 확인.** `infra/99_cleanup.sh` 「9. 키페어」 절의 `[ -f "$KEY_FILE" ] && rm -f ... && ok ...`
    가 키 파일 부재 시 스크립트를 조기 종료시키는지 별도 재현 스크립트로 검사했다 → **종료되지 않는다**
    (`&&` 리스트의 마지막이 아닌 실패는 `set -e` 대상이 아니다). 결함 아님.
+
+#### 🔧 코드 품질 보완 (2026-09-21)
+
+요구사항 판정은 **하나도 바뀌지 않았다.** 아래는 전부 "내일 남이 한 줄 고칠 때
+무엇이 조용히 깨지는가"를 줄인 작업이고, 실행 명령과 산출물 규격은 그대로다.
+
+| 무엇을 | 왜 | 어디를 |
+| --- | --- | --- |
+| 판정 printf 11곳(그중 9곳은 `check()` 밖에 흩어져 있었다) → `pass()`/`fail()`/`skip()` 3개 | 같은 형식이 흩어져 있으면 한 곳만 고쳐도 아무도 모른다. 개수 증가도 같은 줄에서 일어나 빠뜨릴 수 없다 | `infra/04_verify.sh` |
+| `check_sg.py` 와의 계약을 `grep` 으로 출력을 세던 방식에서 `--tally-file` 로 | 판정 건수를 **사람이 읽는 출력**에서 세면, 문구가 한 글자만 바뀌어도 합계가 조용히 어긋난다. 이제 두 정수만 주고받고, 집계가 없거나 종료 코드와 어긋나면 `die` 한다 | `infra/04_verify.sh`, `infra/check_sg.py` |
+| `SSH_CIDR` `case` 에 기본 분기 `*)` 추가 | IPv6 같은 비 IPv4 값이 통과해 두 단계 뒤에서 엉뚱한 메시지로 나타나던 경로(위 격차 8)를 값이 만들어진 자리에서 끊었다 | `infra/02_security_group.sh` |
+| `99_cleanup.sh` 인자 처리를 `case` + `*)` 로 | `--Yes`, `-y` 같은 오타가 조용히 무시된 채 실행되던 것을 거부한다 | `infra/99_cleanup.sh` |
+| 서브넷 연결 검사 ID 를 `B6-1-N6` 로 분리 | 별개 실패 지점이 같은 ID 를 쓰면 로그만 보고 구분할 수 없다 | `infra/04_verify.sh` |
+| `set -eux` → `set -euxo pipefail` | 파이프 중간 실패를 삼키지 않는다 | `infra/user-data.sh` |
+| `pyproject.toml` 추가 | 실행 규격(파이썬 버전, 테스트 실행기)을 문서가 아니라 파일로 선언한다. 런타임 의존성은 0 이다 | 루트 |
+| 테스트 45 → 55개 | 위 규칙들을 **실행되는 검사**로 옮겼다. 합계 등식, 계약 위반 시 정지, `case` 기본 분기, 안전 옵션, 판정 출력 단일화 — 다섯 가지 모두 한 번씩 일부러 깨뜨려 빨간 불을 확인한 뒤 되돌렸다 | `tests/test_infra.py`, `tests/fake_aws.py` |
+
+이 표의 판정 근거를 `파일:줄번호` 대신 **검사 ID·함수 이름·절 이름**으로 적은 것도 같은 이유다.
+줄번호는 리팩터링에 견디지 못하는 좌표라, 코드를 한 줄만 옮겨도 근거가 거짓이 된다.
+0.10 표에서 위 파일들을 가리키던 줄번호 참조도 전부 안정적 좌표로 바꿨다.
 
 ---
 
@@ -769,7 +791,11 @@ codyssey_B6-1/
 │   ├── cleanup-checklist.md
 │   ├── 설계_노트.md            # 트래픽 흐름·SG vs IAM·과금·확장(ALB) 설명
 │   └── screenshots/
-└── tests/                     # AWS 계정 없이 도는 검증
+├── tests/                     # AWS 계정 없이 도는 검증
+│   ├── fake_aws.py            # 가짜 aws CLI (호출 argv 를 기록·응답)
+│   ├── test_infra.py          # 스크립트가 AWS 에 무엇을 요청하는가
+│   └── test_check_sg.py       # 보안 그룹 판정 로직 단위 테스트
+└── pyproject.toml             # 실행 규격 (런타임 의존성 0, 테스트는 pytest 선택)
 ```
 
 ## 8. 더 읽을 것
@@ -786,10 +812,12 @@ codyssey_B6-1/
 ## 9. 테스트
 
 ```bash
-python3 -m unittest discover -s tests -t tests -v
+python3 -m unittest discover -s tests -t tests -v   # 의존성 0개
+python3 -m pytest -q                                # pytest 가 있으면 이것도 된다
 ```
 
-45개 테스트가 **AWS 계정 없이** 10초 안에 끝난다.
+55개 테스트가 **AWS 계정 없이** 15초 안에 끝난다. 설치할 것은 없다 —
+파이썬 코드는 표준 라이브러리만 쓰고, `pyproject.toml` 은 그 사실과 실행 방법만 적어 둔다.
 [`tests/fake_aws.py`](tests/fake_aws.py) 를 `aws` 라는 이름으로 `PATH` 앞에 두고
 스크립트를 **실제로 실행한 뒤**, 기록된 호출을 검사한다.
 
@@ -804,6 +832,14 @@ python3 -m unittest discover -s tests -t tests -v
 | 재실행 안전성 | 두 번째 실행이 리소스를 새로 만들지 않는가 |
 | **부분 실패 복구** | 기본 경로 생성이 실패한 뒤 재실행하면 그 경로를 채우는가 |
 | 키 파일 권한 | `.pem` 이 `0400` 인가 |
+| **검증 스크립트 자체** | `04_verify.sh` 의 합계(`PASS n / FAIL m / SKIP k`)가 **실제로 찍힌 판정 줄 수**와 같은가 |
+| **파일 간 계약** | `check_sg.py` 가 집계를 안 남기면 `04_verify.sh` 가 **멈추는가** (조용히 0 으로 세지 않는가) |
+| **조용한 실패** | 모든 `case` 문에 기본 분기 `*)` 가 있는가, 모든 셸 스크립트가 `set -euo pipefail` 아래 도는가 |
+| 판정 출력 | `[PASS]/[FAIL]/[SKIP]` 형식이 `pass()`/`fail()`/`skip()` **한 곳씩**에만 있는가 |
+| 의존성 0 | `infra/*.py` · `tests/*.py` 가 표준 라이브러리 밖의 모듈을 import 하지 않는가 |
+
+`04_verify.sh` 는 `aws` 와 `curl` 을 **둘 다** PATH 앞에서 가로챈 채로 실행된다.
+그래서 판정 로직은 실제로 돌지만 네트워크로는 한 바이트도 나가지 않는다.
 
 **이 테스트가 확인하지 못하는 것**: 실제 AWS 의 응답, 권한, 과금, 네트워크 도달성.
 그건 계정에서 `bash infra/04_verify.sh` 로만 확인된다. 두 층을 섞어 말하지 않기 위해

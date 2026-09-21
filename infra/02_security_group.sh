@@ -24,6 +24,16 @@ case "$SSH_CIDR" in
   0.0.0.0/0)
     die "SSH 를 0.0.0.0/0 에 여는 것은 과제 금지 사항입니다. 내 IP 로 제한하세요."
     ;;
+  *.*.*.*/*)
+    : # IPv4 CIDR. 대역이 너무 넓지 않은지는 check_sg.py 가 판정한다.
+    ;;
+  *)
+    # 기본 분기가 없으면 모르는 값이 그냥 통과한다. 예컨대 IPv6 전용 회선에서
+    # my_ip() 가 IPv6 를 돌려주면 '2001:db8::1/32' 같은 CidrIp 가 만들어지고,
+    # authorize 실패를 add_rule 이 warn 으로 삼켜(아래 참조) 최종 오류가
+    # "SSH(22) 인바운드 규칙이 없다"로 나온다. 원인이 두 단계 뒤에서 가려진다.
+    die "SSH_CIDR 이 IPv4 CIDR 형식이 아닙니다: '$SSH_CIDR' — MY_IP=1.2.3.4 또는 SSH_CIDR=1.2.3.4/32 로 직접 지정하세요."
+    ;;
 esac
 
 SG_ID="$(state_get SG_ID)"

@@ -14,8 +14,14 @@
 source "$(dirname "${BASH_SOURCE[0]}")/00_env.sh"
 require_cli
 
+# 기본 분기가 없으면 오타 난 플래그(--Yes, -y)가 조용히 무시된 채 실행된다.
+[ "$#" -le 1 ] || die "인자가 너무 많습니다. 사용법: bash infra/99_cleanup.sh [--yes]"
 ASSUME_YES=0
-[ "${1:-}" = "--yes" ] && ASSUME_YES=1
+case "${1:-}" in
+  '')     ASSUME_YES=0 ;;   # 대화형으로 확인을 받는다
+  --yes)  ASSUME_YES=1 ;;
+  *)      die "알 수 없는 인자: '${1:-}'. 사용법: bash infra/99_cleanup.sh [--yes]" ;;
+esac
 
 VPC_ID="$(state_get VPC_ID)"
 SUBNET_ID="$(state_get SUBNET_ID)"
