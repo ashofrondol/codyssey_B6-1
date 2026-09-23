@@ -1,0 +1,109 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="840" height="460" viewBox="0 0 840 460" role="img" aria-labelledby="title desc">
+<title id="title">라우팅 테이블 — 가장 구체적인 줄이 이긴다</title>
+<desc id="desc">위 칸: 서브넷에 연결된 라우팅 테이블에서 목적지 10.0.1.40 은 10.0.0.0/16 과 0.0.0.0/0 둘 다 맞지만 더 긴 /16 줄을 골라 VPC 안에서 전달되고, 192.0.2.10 은 0.0.0.0/0 줄만 맞아 IGW 로 나간다. 아래 칸: 라우팅 테이블을 서브넷에 연결하지 않으면 메인 라우팅 테이블(10.0.0.0/16 → local 만 있음)을 쓰므로 인터넷 목적지는 맞는 줄이 없어 버려지고, 상대는 타임아웃을 본다.</desc>
+<style>
+  text{font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR","Noto Sans CJK KR",sans-serif;font-size:15px;fill:#1D1F23}
+  .bg{fill:#FFFFFF}
+  .ts{font-size:13px;fill:#5B6069}
+  .th{font-size:17px;font-weight:700}
+  .tb{font-weight:700}
+  .mono{font-family:"IBM Plex Mono",ui-monospace,Menlo,Consolas,"Noto Sans Mono CJK KR",monospace;font-size:13.5px}
+  .box{fill:#F4F3EF;stroke:#9A9CA3;stroke-width:1.5}
+  .zone{fill:#FAF9F6;stroke:#C9C6BE;stroke-width:1.2;stroke-dasharray:5 4}
+  .blue{fill:#E7EFF9;stroke:#1F5FAD;stroke-width:1.6}
+  .green{fill:#E6F4EC;stroke:#1B7F4B;stroke-width:1.6}
+  .orange{fill:#FCEFE0;stroke:#B25E09;stroke-width:1.6}
+  .red{fill:#FCEBEA;stroke:#B42318;stroke-width:1.6}
+  .purple{fill:#F1EAFB;stroke:#6E3FB0;stroke-width:1.6}
+  .yellow{fill:#FFF3C4;stroke:#A07800;stroke-width:1.6}
+  .c-blue{fill:#1F5FAD}.c-green{fill:#1B7F4B}.c-orange{fill:#B25E09}.c-red{fill:#B42318}.c-purple{fill:#6E3FB0}.c-muted{fill:#5B6069}
+  .ln{stroke:#6B7078;stroke-width:1.6;fill:none}
+  .ln-blue{stroke:#1F5FAD}.ln-green{stroke:#1B7F4B}.ln-red{stroke:#B42318}.ln-orange{stroke:#B25E09}.ln-purple{stroke:#6E3FB0}
+  .dash{stroke-dasharray:6 5}
+  .ah{fill:#6B7078}.ah-blue{fill:#1F5FAD}.ah-green{fill:#1B7F4B}.ah-red{fill:#B42318}.ah-orange{fill:#B25E09}.ah-purple{fill:#6E3FB0}
+  @media (prefers-color-scheme:dark){
+    text{fill:#E8E6E1}
+    .bg{fill:#1A1C20}
+    .ts{fill:#A9A69F}
+    .box{fill:#24262B;stroke:#6B6E76}
+    .zone{fill:#1F2125;stroke:#43464D}
+    .blue{fill:#1B2940;stroke:#7FB0F0}
+    .green{fill:#16281E;stroke:#5FC98E}
+    .orange{fill:#2E2215;stroke:#E8A05A}
+    .red{fill:#301A18;stroke:#F08A80}
+    .purple{fill:#251C33;stroke:#C3A0F0}
+    .yellow{fill:#2E2812;stroke:#E3C45C}
+    .c-blue{fill:#9CC4F5}.c-green{fill:#7ED3A3}.c-orange{fill:#EDB27A}.c-red{fill:#F4A39B}.c-purple{fill:#D2B8F4}.c-muted{fill:#A9A69F}
+    .ln{stroke:#8D9098}
+    .ln-blue{stroke:#7FB0F0}.ln-green{stroke:#5FC98E}.ln-red{stroke:#F08A80}.ln-orange{stroke:#E8A05A}.ln-purple{stroke:#C3A0F0}
+    .ah{fill:#8D9098}.ah-blue{fill:#7FB0F0}.ah-green{fill:#5FC98E}.ah-red{fill:#F08A80}.ah-orange{fill:#E8A05A}.ah-purple{fill:#C3A0F0}
+  }
+</style>
+<defs>
+  <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ah" d="M0,0 L10,5 L0,10 z"/></marker>
+  <marker id="arrow-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ah-blue" d="M0,0 L10,5 L0,10 z"/></marker>
+  <marker id="arrow-red" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ah-red" d="M0,0 L10,5 L0,10 z"/></marker>
+  <marker id="arrow-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ah-green" d="M0,0 L10,5 L0,10 z"/></marker>
+  <marker id="arrow-orange" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ah-orange" d="M0,0 L10,5 L0,10 z"/></marker>
+  <marker id="arrow-purple" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ah-purple" d="M0,0 L10,5 L0,10 z"/></marker>
+</defs>
+<rect class="bg" x="0" y="0" width="840" height="460"/>
+<text class="th" x="24" y="36">라우팅 테이블 — 목적지마다 가장 구체적인(긴) 줄을 고른다</text>
+<text class="ts" x="24" y="58">보라 = 라우팅 표 · 초록 = 고른 줄과 결과 · 빨강 = 버림 · 주소는 모두 예시</text>
+
+<!-- ① 연결된 라우팅 테이블 -->
+<rect class="zone" x="24" y="76" width="792" height="196" rx="12"/>
+<text class="tb" x="40" y="100">① 연결된 라우팅 테이블 (<tspan class="mono">rtb-…</tspan> → Public Subnet)</text>
+
+<rect class="box" x="40" y="116" width="176" height="56" rx="10"/>
+<text x="128" y="140" text-anchor="middle">목적지 <tspan class="mono">10.0.1.40</tspan></text>
+<text class="ts" x="128" y="160" text-anchor="middle">VPC 안 다른 서버</text>
+
+<rect class="box" x="40" y="196" width="176" height="56" rx="10"/>
+<text x="128" y="220" text-anchor="middle">목적지 <tspan class="mono">192.0.2.10</tspan></text>
+<text class="ts" x="128" y="240" text-anchor="middle">인터넷 사용자</text>
+
+<rect class="purple" x="368" y="116" width="200" height="136" rx="10"/>
+<line class="ln ln-purple" x1="368" y1="184" x2="568" y2="184"/>
+<text class="mono" x="468" y="149" text-anchor="middle">10.0.0.0/16 → local</text>
+<text class="mono" x="468" y="229" text-anchor="middle">0.0.0.0/0 → igw-…</text>
+
+<rect class="green" x="624" y="116" width="176" height="56" rx="10"/>
+<text class="tb c-green" x="712" y="140" text-anchor="middle">VPC 안에서 전달</text>
+<text class="ts" x="712" y="160" text-anchor="middle">인터넷으로 안 나감</text>
+
+<rect class="green" x="624" y="196" width="176" height="56" rx="10"/>
+<text class="tb c-green" x="712" y="220" text-anchor="middle">IGW 로 → 인터넷</text>
+<text class="ts" x="712" y="240" text-anchor="middle">응답이 사용자에게 감</text>
+
+<line class="ln ln-green" x1="216" y1="144" x2="364" y2="144" marker-end="url(#arrow-green)"/>
+<text class="ts c-green" x="290" y="136" text-anchor="middle">/16 일치 · 더 김 ✔</text>
+<text class="ts" x="290" y="163" text-anchor="middle">/0 도 맞지만 짧다</text>
+<line class="ln ln-green" x1="216" y1="224" x2="364" y2="224" marker-end="url(#arrow-green)"/>
+<text class="ts c-green" x="290" y="216" text-anchor="middle">/0 만 일치 ✔</text>
+<line class="ln ln-green" x1="568" y1="144" x2="620" y2="144" marker-end="url(#arrow-green)"/>
+<line class="ln ln-green" x1="568" y1="224" x2="620" y2="224" marker-end="url(#arrow-green)"/>
+
+<!-- ② 연결하지 않았을 때 -->
+<rect class="zone" x="24" y="288" width="792" height="148" rx="12"/>
+<text class="tb" x="40" y="312">② 서브넷에 연결하지 않았을 때 → 메인 라우팅 테이블</text>
+
+<rect class="box" x="40" y="328" width="176" height="56" rx="10"/>
+<text x="128" y="352" text-anchor="middle">목적지 <tspan class="mono">192.0.2.10</tspan></text>
+<text class="ts" x="128" y="372" text-anchor="middle">인터넷 사용자</text>
+
+<rect class="purple" x="368" y="328" width="200" height="56" rx="10"/>
+<text class="mono" x="468" y="352" text-anchor="middle">10.0.0.0/16 → local</text>
+<text class="ts" x="468" y="372" text-anchor="middle">0.0.0.0/0 줄이 없다</text>
+
+<rect class="red" x="624" y="328" width="176" height="56" rx="10"/>
+<text class="tb c-red" x="712" y="352" text-anchor="middle">맞는 줄 없음 → 버림</text>
+<text class="ts" x="712" y="372" text-anchor="middle">패킷이 사라진다</text>
+
+<line class="ln" x1="216" y1="356" x2="364" y2="356" marker-end="url(#arrow)"/>
+<text class="ts" x="290" y="348" text-anchor="middle">/16 과 안 맞음</text>
+<line class="ln ln-red" x1="568" y1="356" x2="620" y2="356" marker-end="url(#arrow-red)"/>
+<text class="ts c-red" x="594" y="348" text-anchor="middle">✘</text>
+
+<text class="ts" x="40" y="416">요청은 들어와도 응답이 못 나간다 → 상대(브라우저·SSH)는 타임아웃 · 그래서 <tspan class="mono">01_network.sh</tspan> 가 표를 서브넷에 연결(associate)한다</text>
+</svg>

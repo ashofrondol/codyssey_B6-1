@@ -1,0 +1,117 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="504" viewBox="0 0 880 504" role="img" aria-labelledby="title desc">
+<title id="title">두 개의 문 — 패킷을 거르는 보안 그룹, API 호출을 거르는 IAM</title>
+<desc id="desc">왼쪽은 서버로 오는 패킷을 보안 그룹이 거르는 모습이다: tcp 80 은 누구나 허용되고, 내 IP 가 아닌 곳의 tcp 22 는 조용히 버려져 상대는 타임아웃을 겪는다. 오른쪽은 IAM 사용자 codyssey-b6-1 의 API 호출을 정책 codyssey-b6-1-policy 가 평가하는 모습이다: 서울 리전 ec2:RunInstances 는 허용, s3:ListAllMyBuckets 는 허용 규칙이 없어 AccessDenied, us-east-1 의 ec2:CreateVpc 는 리전 조건 불일치로 거부된다.</desc>
+<style>
+  text{font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR","Noto Sans CJK KR",sans-serif;font-size:15px;fill:#1D1F23}
+  .bg{fill:#FFFFFF}
+  .ts{font-size:13px;fill:#5B6069}
+  .th{font-size:17px;font-weight:700}
+  .tb{font-weight:700}
+  .mono{font-family:"IBM Plex Mono",ui-monospace,Menlo,Consolas,"Noto Sans Mono CJK KR",monospace;font-size:13.5px}
+  .box{fill:#F4F3EF;stroke:#9A9CA3;stroke-width:1.5}
+  .zone{fill:#FAF9F6;stroke:#C9C6BE;stroke-width:1.2;stroke-dasharray:5 4}
+  .blue{fill:#E7EFF9;stroke:#1F5FAD;stroke-width:1.6}
+  .green{fill:#E6F4EC;stroke:#1B7F4B;stroke-width:1.6}
+  .orange{fill:#FCEFE0;stroke:#B25E09;stroke-width:1.6}
+  .red{fill:#FCEBEA;stroke:#B42318;stroke-width:1.6}
+  .purple{fill:#F1EAFB;stroke:#6E3FB0;stroke-width:1.6}
+  .yellow{fill:#FFF3C4;stroke:#A07800;stroke-width:1.6}
+  .c-blue{fill:#1F5FAD}.c-green{fill:#1B7F4B}.c-orange{fill:#B25E09}.c-red{fill:#B42318}.c-purple{fill:#6E3FB0}.c-muted{fill:#5B6069}
+  .ln{stroke:#6B7078;stroke-width:1.6;fill:none}
+  .ln-blue{stroke:#1F5FAD}.ln-green{stroke:#1B7F4B}.ln-red{stroke:#B42318}.ln-orange{stroke:#B25E09}.ln-purple{stroke:#6E3FB0}
+  .dash{stroke-dasharray:6 5}
+  .ah{fill:#6B7078}.ah-blue{fill:#1F5FAD}.ah-green{fill:#1B7F4B}.ah-red{fill:#B42318}.ah-orange{fill:#B25E09}.ah-purple{fill:#6E3FB0}
+  @media (prefers-color-scheme:dark){
+    text{fill:#E8E6E1}
+    .bg{fill:#1A1C20}
+    .ts{fill:#A9A69F}
+    .box{fill:#24262B;stroke:#6B6E76}
+    .zone{fill:#1F2125;stroke:#43464D}
+    .blue{fill:#1B2940;stroke:#7FB0F0}
+    .green{fill:#16281E;stroke:#5FC98E}
+    .orange{fill:#2E2215;stroke:#E8A05A}
+    .red{fill:#301A18;stroke:#F08A80}
+    .purple{fill:#251C33;stroke:#C3A0F0}
+    .yellow{fill:#2E2812;stroke:#E3C45C}
+    .c-blue{fill:#9CC4F5}.c-green{fill:#7ED3A3}.c-orange{fill:#EDB27A}.c-red{fill:#F4A39B}.c-purple{fill:#D2B8F4}.c-muted{fill:#A9A69F}
+    .ln{stroke:#8D9098}
+    .ln-blue{stroke:#7FB0F0}.ln-green{stroke:#5FC98E}.ln-red{stroke:#F08A80}.ln-orange{stroke:#E8A05A}.ln-purple{stroke:#C3A0F0}
+    .ah{fill:#8D9098}.ah-blue{fill:#7FB0F0}.ah-green{fill:#5FC98E}.ah-red{fill:#F08A80}.ah-orange{fill:#E8A05A}.ah-purple{fill:#C3A0F0}
+  }
+</style>
+<defs>
+  <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ah" d="M0,0 L10,5 L0,10 z"/></marker>
+  <marker id="arrow-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ah-blue" d="M0,0 L10,5 L0,10 z"/></marker>
+  <marker id="arrow-red" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ah-red" d="M0,0 L10,5 L0,10 z"/></marker>
+  <marker id="arrow-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ah-green" d="M0,0 L10,5 L0,10 z"/></marker>
+  <marker id="arrow-orange" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ah-orange" d="M0,0 L10,5 L0,10 z"/></marker>
+  <marker id="arrow-purple" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ah-purple" d="M0,0 L10,5 L0,10 z"/></marker>
+</defs>
+<rect class="bg" x="0" y="0" width="880" height="504"/>
+<text class="th" x="24" y="36">두 개의 문 — 패킷을 거르는 보안 그룹, API 호출을 거르는 IAM</text>
+<text class="ts" x="24" y="58">초록 = 허용 · 빨강 = 거부</text>
+<text class="ts" x="364" y="86" text-anchor="middle">서로를 대신하지 못한다</text>
+<line class="ln" x1="364" y1="96" x2="364" y2="488"/>
+<rect class="zone" x="24" y="96" width="324" height="392" rx="12"/>
+<text class="tb" x="40" y="122">데이터 영역 — 서버로 오는 패킷</text>
+<line class="ln ln-blue" x1="108" y1="210" x2="108" y2="236" marker-end="url(#arrow-blue)"/>
+<line class="ln ln-blue" x1="264" y1="210" x2="264" y2="236" marker-end="url(#arrow-blue)"/>
+<line class="ln ln-green" x1="108" y1="292" x2="108" y2="344" marker-end="url(#arrow-green)"/>
+<line class="ln ln-red" x1="264" y1="292" x2="264" y2="344" marker-end="url(#arrow-red)"/>
+<text class="ts c-green" x="118" y="323">허용</text>
+<text class="ts c-red" x="274" y="323">거부</text>
+<rect class="blue" x="40" y="138" width="136" height="72" rx="8"/>
+<text class="mono" x="108.0" y="160.0" text-anchor="middle">tcp 80</text>
+<text class="ts" x="108.0" y="179.0" text-anchor="middle">출처: 아무나</text>
+<text class="ts" x="108.0" y="198.0" text-anchor="middle">(웹 손님)</text>
+<rect class="blue" x="196" y="138" width="136" height="72" rx="8"/>
+<text class="mono" x="264.0" y="160.0" text-anchor="middle">tcp 22</text>
+<text class="mono" x="264.0" y="179.0" text-anchor="middle">203.0.113.99</text>
+<text class="ts" x="264.0" y="198.0" text-anchor="middle">내 IP 아님 (예시)</text>
+<rect class="box" x="40" y="240" width="292" height="52" rx="8"/>
+<text class="tb" x="186.0" y="261.0" text-anchor="middle">Security Group</text>
+<text class="ts" x="186.0" y="281.0" text-anchor="middle">80 ← 모두 · 22 ← 내 IP 만</text>
+<rect class="box" x="40" y="348" width="136" height="64" rx="8"/>
+<text class="tb" x="108.0" y="375.0" text-anchor="middle">EC2 · nginx</text>
+<text class="ts c-green" x="108.0" y="395.0" text-anchor="middle">응답을 돌려줌</text>
+<rect class="red" x="196" y="348" width="136" height="64" rx="8"/>
+<text class="tb c-red" x="264.0" y="375.0" text-anchor="middle">✘ 조용히 버림</text>
+<text class="ts" x="264.0" y="395.0" text-anchor="middle">상대는 타임아웃</text>
+<text class="ts" x="40" y="446">막혔을 때: 오류 메시지 없이</text>
+<text class="ts" x="40" y="466">기다리다 끊김(타임아웃)</text>
+<rect class="zone" x="380" y="96" width="476" height="392" rx="12"/>
+<text class="tb" x="396" y="122">제어 영역 — AWS 를 조작하는 API 호출</text>
+<rect class="box" x="396" y="136" width="180" height="52" rx="8"/>
+<text class="tb" x="486.0" y="157.0" text-anchor="middle">IAM 사용자</text>
+<text class="mono" x="486.0" y="177.0" text-anchor="middle">codyssey-b6-1</text>
+<line class="ln" x1="576" y1="162" x2="604" y2="162" marker-end="url(#arrow)"/>
+<rect class="box" x="608" y="136" width="232" height="52" rx="8"/>
+<text class="tb" x="724.0" y="157.0" text-anchor="middle">IAM 정책 평가</text>
+<text class="mono" x="724.0" y="177.0" text-anchor="middle">codyssey-b6-1-policy</text>
+<rect class="blue" x="396" y="204" width="180" height="52" rx="8"/>
+<text class="mono" x="486.0" y="225.0" text-anchor="middle">ec2:RunInstances</text>
+<text class="ts" x="486.0" y="245.0" text-anchor="middle">ap-northeast-2 (서울)</text>
+<line class="ln ln-green" x1="576" y1="230" x2="604" y2="230" marker-end="url(#arrow-green)"/>
+<rect class="green" x="608" y="204" width="232" height="52" rx="8"/>
+<text class="tb c-green" x="624" y="225.0" text-anchor="start">✔ 허용</text>
+<text class="ts" x="624" y="245.0" text-anchor="start">ComputeLifecycle · 리전 조건 일치</text>
+<rect class="blue" x="396" y="264" width="180" height="52" rx="8"/>
+<text class="mono" x="486.0" y="285.0" text-anchor="middle">s3:ListAllMyBuckets</text>
+<text class="ts" x="486.0" y="305.0" text-anchor="middle">S3 버킷 목록 보기</text>
+<line class="ln ln-red" x1="576" y1="290" x2="604" y2="290" marker-end="url(#arrow-red)"/>
+<rect class="red" x="608" y="264" width="232" height="52" rx="8"/>
+<text class="tb c-red" x="624" y="285.0" text-anchor="start">✘ AccessDenied</text>
+<text class="ts" x="624" y="305.0" text-anchor="start">허용 규칙 없음 = 암묵적 거부</text>
+<rect class="blue" x="396" y="324" width="180" height="52" rx="8"/>
+<text class="mono" x="486.0" y="345.0" text-anchor="middle">ec2:CreateVpc</text>
+<text class="ts" x="486.0" y="365.0" text-anchor="middle">us-east-1 (버지니아)</text>
+<line class="ln ln-red" x1="576" y1="350" x2="604" y2="350" marker-end="url(#arrow-red)"/>
+<rect class="red" x="608" y="324" width="232" height="52" rx="8"/>
+<text class="tb c-red" x="624" y="345.0" text-anchor="start">✘ 거부</text>
+<text class="ts" x="624" y="365.0" text-anchor="start">aws:RequestedRegion 조건 불일치</text>
+<rect class="box" x="396" y="388" width="444" height="88" rx="8"/>
+<text class="tb" x="412" y="408.5" text-anchor="start">IAM 이 판정하는 순서</text>
+<text class="ts" x="412" y="427.5" text-anchor="start">① 명시적 Deny 가 맞으면 → 거부</text>
+<text class="ts" x="412" y="446.5" text-anchor="start">② 조건까지 맞는 Allow 가 있으면 → 허용</text>
+<text class="ts" x="412" y="465.5" text-anchor="start">③ 둘 다 없으면 → 암묵적 거부 (기본값)</text>
+</svg>

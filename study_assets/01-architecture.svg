@@ -1,0 +1,117 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="860" height="660" viewBox="0 0 860 660" role="img" aria-labelledby="title desc">
+<title id="title">인터넷에서 nginx 까지 — 무엇이 어디에 있나</title>
+<desc id="desc">인터넷 사용자의 HTTP 80 요청과 관리자 PC 의 SSH 22 요청이 모두 Internet Gateway 를 지나 VPC 10.0.0.0/16 의 Public Subnet 10.0.1.0/24 로 들어오고, 보안 그룹(80 은 누구나, 22 는 관리자 IP 만 허용)을 통과해 EC2 의 nginx 에 닿는다. 응답과 아웃바운드는 서브넷에 연결된 라우팅 테이블의 0.0.0.0/0 → igw 줄을 따라 Internet Gateway 로 나간다. 아래에 각 요소를 만드는 스크립트를 적었다.</desc>
+<style>
+  text{font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR","Noto Sans CJK KR",sans-serif;font-size:15px;fill:#1D1F23}
+  .bg{fill:#FFFFFF}
+  .ts{font-size:13px;fill:#5B6069}
+  .th{font-size:17px;font-weight:700}
+  .tb{font-weight:700}
+  .mono{font-family:"IBM Plex Mono",ui-monospace,Menlo,Consolas,"Noto Sans Mono CJK KR",monospace;font-size:13.5px}
+  .box{fill:#F4F3EF;stroke:#9A9CA3;stroke-width:1.5}
+  .zone{fill:#FAF9F6;stroke:#C9C6BE;stroke-width:1.2;stroke-dasharray:5 4}
+  .blue{fill:#E7EFF9;stroke:#1F5FAD;stroke-width:1.6}
+  .green{fill:#E6F4EC;stroke:#1B7F4B;stroke-width:1.6}
+  .orange{fill:#FCEFE0;stroke:#B25E09;stroke-width:1.6}
+  .red{fill:#FCEBEA;stroke:#B42318;stroke-width:1.6}
+  .purple{fill:#F1EAFB;stroke:#6E3FB0;stroke-width:1.6}
+  .yellow{fill:#FFF3C4;stroke:#A07800;stroke-width:1.6}
+  .c-blue{fill:#1F5FAD}.c-green{fill:#1B7F4B}.c-orange{fill:#B25E09}.c-red{fill:#B42318}.c-purple{fill:#6E3FB0}.c-muted{fill:#5B6069}
+  .ln{stroke:#6B7078;stroke-width:1.6;fill:none}
+  .ln-blue{stroke:#1F5FAD}.ln-green{stroke:#1B7F4B}.ln-red{stroke:#B42318}.ln-orange{stroke:#B25E09}.ln-purple{stroke:#6E3FB0}
+  .dash{stroke-dasharray:6 5}
+  .ah{fill:#6B7078}.ah-blue{fill:#1F5FAD}.ah-green{fill:#1B7F4B}.ah-red{fill:#B42318}.ah-orange{fill:#B25E09}.ah-purple{fill:#6E3FB0}
+  @media (prefers-color-scheme:dark){
+    text{fill:#E8E6E1}
+    .bg{fill:#1A1C20}
+    .ts{fill:#A9A69F}
+    .box{fill:#24262B;stroke:#6B6E76}
+    .zone{fill:#1F2125;stroke:#43464D}
+    .blue{fill:#1B2940;stroke:#7FB0F0}
+    .green{fill:#16281E;stroke:#5FC98E}
+    .orange{fill:#2E2215;stroke:#E8A05A}
+    .red{fill:#301A18;stroke:#F08A80}
+    .purple{fill:#251C33;stroke:#C3A0F0}
+    .yellow{fill:#2E2812;stroke:#E3C45C}
+    .c-blue{fill:#9CC4F5}.c-green{fill:#7ED3A3}.c-orange{fill:#EDB27A}.c-red{fill:#F4A39B}.c-purple{fill:#D2B8F4}.c-muted{fill:#A9A69F}
+    .ln{stroke:#8D9098}
+    .ln-blue{stroke:#7FB0F0}.ln-green{stroke:#5FC98E}.ln-red{stroke:#F08A80}.ln-orange{stroke:#E8A05A}.ln-purple{stroke:#C3A0F0}
+    .ah{fill:#8D9098}.ah-blue{fill:#7FB0F0}.ah-green{fill:#5FC98E}.ah-red{fill:#F08A80}.ah-orange{fill:#E8A05A}.ah-purple{fill:#C3A0F0}
+  }
+</style>
+<defs>
+  <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ah" d="M0,0 L10,5 L0,10 z"/></marker>
+  <marker id="arrow-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ah-blue" d="M0,0 L10,5 L0,10 z"/></marker>
+  <marker id="arrow-red" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ah-red" d="M0,0 L10,5 L0,10 z"/></marker>
+  <marker id="arrow-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ah-green" d="M0,0 L10,5 L0,10 z"/></marker>
+  <marker id="arrow-orange" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ah-orange" d="M0,0 L10,5 L0,10 z"/></marker>
+  <marker id="arrow-purple" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ah-purple" d="M0,0 L10,5 L0,10 z"/></marker>
+</defs>
+<rect class="bg" x="0" y="0" width="860" height="660"/>
+<text class="th" x="24" y="36">인터넷에서 nginx 까지 — 무엇이 어디에 있나</text>
+<text class="ts" x="24" y="58">파란 실선 = 들어오는 요청 · 초록 점선 = 나가는 응답·아웃바운드 · 보라 = 라우팅 표</text>
+
+<!-- 바깥 사람들 -->
+<rect class="box" x="24" y="80" width="250" height="64" rx="10"/>
+<text class="tb" x="149" y="106" text-anchor="middle">관리자 PC</text>
+<text class="mono" x="149" y="128" text-anchor="middle">198.51.100.7/32 (예시)</text>
+
+<rect class="box" x="586" y="80" width="250" height="64" rx="10"/>
+<text class="tb" x="711" y="106" text-anchor="middle">인터넷 사용자</text>
+<text class="ts" x="711" y="128" text-anchor="middle">브라우저 · curl</text>
+
+<!-- 영역 -->
+<rect class="zone" x="24" y="168" width="812" height="420" rx="12"/>
+<text class="ts" x="40" y="190">AWS 서울 리전 · ap-northeast-2</text>
+
+<rect class="zone" x="48" y="228" width="764" height="344" rx="12"/>
+<text x="64" y="252"><tspan class="tb">VPC</tspan><tspan class="mono"> 10.0.0.0/16</tspan></text>
+
+<rect class="zone" x="72" y="300" width="716" height="256" rx="12"/>
+<text x="88" y="322"><tspan class="tb">Public Subnet</tspan><tspan class="mono"> 10.0.1.0/24</tspan></text>
+<text class="ts" x="88" y="341">ap-northeast-2a</text>
+<text class="ts" x="772" y="322" text-anchor="end">퍼블릭 IP 자동할당: 켬</text>
+
+<!-- Internet Gateway: VPC 윗변에 걸침 -->
+<rect class="box" x="330" y="192" width="200" height="72" rx="10"/>
+<text class="tb" x="430" y="214" text-anchor="middle">Internet Gateway</text>
+<text class="mono" x="430" y="234" text-anchor="middle">igw-…</text>
+<text class="ts" x="430" y="254" text-anchor="middle">VPC 에 연결(attach)</text>
+
+<!-- Route Table -->
+<rect class="purple" x="96" y="368" width="260" height="96" rx="10"/>
+<text class="tb c-purple" x="226" y="394" text-anchor="middle">Route Table (서브넷에 연결)</text>
+<text class="mono" x="226" y="418" text-anchor="middle">10.0.0.0/16 → local</text>
+<text class="mono" x="226" y="442" text-anchor="middle">0.0.0.0/0 → igw-…</text>
+
+<!-- Security Group 틀과 EC2 -->
+<rect class="box" x="392" y="336" width="372" height="204" rx="10"/>
+<text class="tb" x="456" y="358">Security Group (인스턴스에 붙음)</text>
+<text class="c-green" x="456" y="381">허용 tcp 80 ← 0.0.0.0/0</text>
+<text class="c-green" x="456" y="402">허용 tcp 22 ← 198.51.100.7/32</text>
+<text class="ts" x="456" y="422">그 외 인바운드: 없음</text>
+
+<rect class="bg" x="416" y="436" width="332" height="88" rx="8"/>
+<rect class="ln" x="416" y="436" width="332" height="88" rx="8"/>
+<text class="tb" x="432" y="460">EC2 t3.micro · Amazon Linux 2023</text>
+<text class="mono" x="432" y="482">nginx :80 · GET /health → 200 OK</text>
+<text class="ts" x="432" y="504">EBS gp3 8GiB · 퍼블릭 IP 203.0.113.25 (예시)</text>
+
+<!-- 들어오는 요청 (파랑 실선) -->
+<path class="ln ln-blue" d="M264,144 V212 H326" marker-end="url(#arrow-blue)"/>
+<text class="ts c-blue" x="256" y="161" text-anchor="end">SSH :22 (내 IP만)</text>
+<path class="ln ln-blue" d="M596,144 V212 H534" marker-end="url(#arrow-blue)"/>
+<text class="ts c-blue" x="604" y="161">HTTP :80 (누구나)</text>
+<path class="ln ln-blue" d="M440,264 V432" marker-end="url(#arrow-blue)"/>
+
+<!-- 나가는 응답·아웃바운드 (초록 점선) -->
+<path class="ln ln-green dash" d="M416,440 H360" marker-end="url(#arrow-green)"/>
+<path class="ln ln-green dash" d="M344,368 V268" marker-end="url(#arrow-green)"/>
+<text class="ts c-green" x="332" y="290" text-anchor="end">응답·아웃바운드</text>
+<path class="ln ln-green dash" d="M344,192 V104" marker-end="url(#arrow-green)"/>
+<text class="ts c-green" x="354" y="122">→ 인터넷</text>
+
+<!-- 담당 스크립트 -->
+<text x="24" y="614"><tspan class="mono">01_network.sh</tspan><tspan class="ts"> VPC·Subnet·IGW·Route Table  ·  </tspan><tspan class="mono">02_security_group.sh</tspan><tspan class="ts"> Security Group</tspan></text>
+<text x="24" y="638"><tspan class="mono">03_instance.sh</tspan><tspan class="ts"> + </tspan><tspan class="mono">user-data.sh</tspan><tspan class="ts"> EC2·nginx  ·  </tspan><tspan class="mono">04_verify.sh</tspan><tspan class="ts"> 검증  ·  </tspan><tspan class="mono">99_cleanup.sh</tspan><tspan class="ts"> 정리</tspan></text>
+</svg>

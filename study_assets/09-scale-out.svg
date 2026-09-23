@@ -1,0 +1,119 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="860" height="500" viewBox="0 0 860 500" role="img" aria-labelledby="title desc">
+<title id="title">인스턴스를 2대로 — 진입점을 하나 더 세운다</title>
+<desc id="desc">왼쪽은 지금 구조로, 사용자가 퍼블릭 IP 203.0.113.25 하나로 ap-northeast-2a 서브넷의 EC2 1대에 접속하므로 진입점과 서버·AZ 가 모두 하나뿐이다. 오른쪽은 확장 구조로, 사용자가 ALB 의 DNS 이름으로 들어오면 ALB 가 서로 다른 AZ 의 서브넷 두 곳에 있는 EC2 로 요청을 나누고 GET /health 헬스체크로 정상 여부를 확인한다. 인스턴스 보안 그룹은 CIDR 대신 ALB 보안 그룹을 출발지로 참조하고, 두 인스턴스는 Auto Scaling Group 과 Launch Template(user-data.sh 재사용)으로 관리한다.</desc>
+<style>
+  text{font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR","Noto Sans CJK KR",sans-serif;font-size:15px;fill:#1D1F23}
+  .bg{fill:#FFFFFF}
+  .ts{font-size:13px;fill:#5B6069}
+  .th{font-size:17px;font-weight:700}
+  .tb{font-weight:700}
+  .mono{font-family:"IBM Plex Mono",ui-monospace,Menlo,Consolas,"Noto Sans Mono CJK KR",monospace;font-size:13.5px}
+  .box{fill:#F4F3EF;stroke:#9A9CA3;stroke-width:1.5}
+  .zone{fill:#FAF9F6;stroke:#C9C6BE;stroke-width:1.2;stroke-dasharray:5 4}
+  .blue{fill:#E7EFF9;stroke:#1F5FAD;stroke-width:1.6}
+  .green{fill:#E6F4EC;stroke:#1B7F4B;stroke-width:1.6}
+  .orange{fill:#FCEFE0;stroke:#B25E09;stroke-width:1.6}
+  .red{fill:#FCEBEA;stroke:#B42318;stroke-width:1.6}
+  .purple{fill:#F1EAFB;stroke:#6E3FB0;stroke-width:1.6}
+  .yellow{fill:#FFF3C4;stroke:#A07800;stroke-width:1.6}
+  .c-blue{fill:#1F5FAD}.c-green{fill:#1B7F4B}.c-orange{fill:#B25E09}.c-red{fill:#B42318}.c-purple{fill:#6E3FB0}.c-muted{fill:#5B6069}
+  .ln{stroke:#6B7078;stroke-width:1.6;fill:none}
+  .ln-blue{stroke:#1F5FAD}.ln-green{stroke:#1B7F4B}.ln-red{stroke:#B42318}.ln-orange{stroke:#B25E09}.ln-purple{stroke:#6E3FB0}
+  .dash{stroke-dasharray:6 5}
+  .ah{fill:#6B7078}.ah-blue{fill:#1F5FAD}.ah-green{fill:#1B7F4B}.ah-red{fill:#B42318}.ah-orange{fill:#B25E09}.ah-purple{fill:#6E3FB0}
+  @media (prefers-color-scheme:dark){
+    text{fill:#E8E6E1}
+    .bg{fill:#1A1C20}
+    .ts{fill:#A9A69F}
+    .box{fill:#24262B;stroke:#6B6E76}
+    .zone{fill:#1F2125;stroke:#43464D}
+    .blue{fill:#1B2940;stroke:#7FB0F0}
+    .green{fill:#16281E;stroke:#5FC98E}
+    .orange{fill:#2E2215;stroke:#E8A05A}
+    .red{fill:#301A18;stroke:#F08A80}
+    .purple{fill:#251C33;stroke:#C3A0F0}
+    .yellow{fill:#2E2812;stroke:#E3C45C}
+    .c-blue{fill:#9CC4F5}.c-green{fill:#7ED3A3}.c-orange{fill:#EDB27A}.c-red{fill:#F4A39B}.c-purple{fill:#D2B8F4}.c-muted{fill:#A9A69F}
+    .ln{stroke:#8D9098}
+    .ln-blue{stroke:#7FB0F0}.ln-green{stroke:#5FC98E}.ln-red{stroke:#F08A80}.ln-orange{stroke:#E8A05A}.ln-purple{stroke:#C3A0F0}
+    .ah{fill:#8D9098}.ah-blue{fill:#7FB0F0}.ah-green{fill:#5FC98E}.ah-red{fill:#F08A80}.ah-orange{fill:#E8A05A}.ah-purple{fill:#C3A0F0}
+  }
+</style>
+<defs>
+  <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ah" d="M0,0 L10,5 L0,10 z"/></marker>
+  <marker id="arrow-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ah-blue" d="M0,0 L10,5 L0,10 z"/></marker>
+  <marker id="arrow-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ah-green" d="M0,0 L10,5 L0,10 z"/></marker>
+  <marker id="arrow-orange" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ah-orange" d="M0,0 L10,5 L0,10 z"/></marker>
+</defs>
+<rect class="bg" x="0" y="0" width="860" height="500"/>
+
+<text class="th" x="24" y="36">인스턴스를 2대로 — 진입점을 하나 더 세운다</text>
+<text class="ts" x="24" y="58">주황 = 지금의 병목 · 파랑 = 요청 흐름 · 초록 = 헬스체크 통과</text>
+
+<line class="ln" x1="372" y1="72" x2="372" y2="448"/>
+
+<!-- 왼쪽: 지금 -->
+<text class="tb" x="24" y="88">지금</text>
+
+<rect class="box" x="130" y="96" width="120" height="36" rx="10"/>
+<text x="190" y="119" text-anchor="middle" class="tb">사용자</text>
+
+<rect class="orange" x="100" y="152" width="180" height="52" rx="10"/>
+<text x="190" y="175" text-anchor="middle" class="mono">203.0.113.25</text>
+<text x="190" y="195" text-anchor="middle" class="ts">퍼블릭 IP 하나</text>
+<text x="292" y="185" class="tb c-orange">①</text>
+
+<rect class="zone" x="40" y="250" width="300" height="110" rx="12"/>
+<rect class="box" x="126" y="260" width="128" height="52" rx="10"/>
+<text x="190" y="283" text-anchor="middle" class="tb">EC2 1대</text>
+<text x="190" y="303" text-anchor="middle" class="ts">nginx · /health</text>
+<text x="266" y="293" class="tb c-orange">②</text>
+<text x="190" y="336" text-anchor="middle" class="ts">ap-northeast-2a</text>
+<text x="190" y="353" text-anchor="middle" class="mono">10.0.1.0/24</text>
+
+<line class="ln ln-blue" x1="190" y1="132" x2="190" y2="148" marker-end="url(#arrow-blue)"/>
+<line class="ln ln-blue" x1="190" y1="204" x2="190" y2="256" marker-end="url(#arrow-blue)"/>
+
+<rect class="orange" x="40" y="374" width="300" height="30" rx="8"/>
+<text x="54" y="394" class="ts c-orange">① 진입점 = IP 하나 → 2대로 나눌 주체가 없다</text>
+<rect class="orange" x="40" y="412" width="300" height="30" rx="8"/>
+<text x="54" y="432" class="ts c-orange">② 서버·AZ 하나 = 단일 장애점</text>
+
+<!-- 오른쪽: 확장 -->
+<text class="tb" x="392" y="88">확장</text>
+
+<rect class="box" x="442" y="96" width="120" height="36" rx="10"/>
+<text x="502" y="119" text-anchor="middle" class="tb">사용자</text>
+
+<rect class="blue" x="422" y="152" width="160" height="52" rx="10"/>
+<text x="502" y="175" text-anchor="middle" class="tb c-blue">ALB</text>
+<text x="502" y="195" text-anchor="middle" class="ts">DNS 이름 하나</text>
+
+<text x="604" y="150" class="mono">ALB SG: 80 ← 0.0.0.0/0</text>
+<text x="604" y="172" class="mono">인스턴스 SG: 80 ← ALB SG</text>
+<text x="604" y="192" class="ts">(CIDR 대신 SG 참조)</text>
+
+<rect class="zone" x="400" y="250" width="204" height="110" rx="12"/>
+<rect class="green" x="438" y="260" width="128" height="52" rx="10"/>
+<text x="502" y="283" text-anchor="middle" class="tb c-green">EC2</text>
+<text x="502" y="303" text-anchor="middle" class="ts">헬스체크 통과</text>
+<text x="502" y="336" text-anchor="middle" class="ts">ap-northeast-2a</text>
+<text x="502" y="353" text-anchor="middle"><tspan class="mono">10.0.1.0/24</tspan><tspan class="ts"> (예시)</tspan></text>
+
+<rect class="zone" x="620" y="250" width="204" height="110" rx="12"/>
+<rect class="green" x="658" y="260" width="128" height="52" rx="10"/>
+<text x="722" y="283" text-anchor="middle" class="tb c-green">EC2</text>
+<text x="722" y="303" text-anchor="middle" class="ts">헬스체크 통과</text>
+<text x="722" y="336" text-anchor="middle" class="ts">ap-northeast-2c</text>
+<text x="722" y="353" text-anchor="middle"><tspan class="mono">10.0.2.0/24</tspan><tspan class="ts"> (예시)</tspan></text>
+
+<line class="ln ln-blue" x1="502" y1="132" x2="502" y2="148" marker-end="url(#arrow-blue)"/>
+<path class="ln ln-blue" d="M502,204 L502,256" marker-end="url(#arrow-blue)"/>
+<path class="ln ln-blue" d="M502,222 L722,222 L722,256" marker-end="url(#arrow-blue)"/>
+<text x="612" y="242" text-anchor="middle" class="ts c-green">헬스체크 GET /health → 200 OK</text>
+
+<path class="ln dash" d="M400,366 L400,376 L824,376 L824,366"/>
+<text x="612" y="396" text-anchor="middle" class="ts">Auto Scaling Group + Launch Template (<tspan class="mono">user-data.sh</tspan> 재사용)</text>
+
+<text x="430" y="474" text-anchor="middle" class="ts">먼저 정할 것: 세션·업로드 파일은 인스턴스 밖으로 (ElastiCache · S3 · RDS)</text>
+</svg>

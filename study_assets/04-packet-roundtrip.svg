@@ -1,0 +1,110 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="860" height="508" viewBox="0 0 860 508" role="img" aria-labelledby="title desc">
+<title id="title">HTTP 요청 한 번의 왕복 — IGW 가 주소를 바꾼다</title>
+<desc id="desc">브라우저가 퍼블릭 IP 203.0.113.25 로 보낸 요청을 Internet Gateway 가 사설 IP 10.0.1.25 로 바꿔 넣어 주고, 보안 그룹이 tcp 80 ← 0.0.0.0/0 규칙으로 허용한다. 인바운드 80 과 아웃바운드가 모두 전체 허용이라 이 흐름은 연결 추적 대상이 아니고, nginx 의 응답은 아웃바운드 전체 허용 규칙으로 보안 그룹을 통과해 라우팅 표의 0.0.0.0/0 → IGW 경로로 나가며 IGW 가 출발 주소를 다시 퍼블릭 IP 로 바꾼다.</desc>
+<style>
+  text{font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR","Noto Sans CJK KR",sans-serif;font-size:15px;fill:#1D1F23}
+  .bg{fill:#FFFFFF}
+  .ts{font-size:13px;fill:#5B6069}
+  .th{font-size:17px;font-weight:700}
+  .tb{font-weight:700}
+  .mono{font-family:"IBM Plex Mono",ui-monospace,Menlo,Consolas,"Noto Sans Mono CJK KR",monospace;font-size:13.5px}
+  .box{fill:#F4F3EF;stroke:#9A9CA3;stroke-width:1.5}
+  .zone{fill:#FAF9F6;stroke:#C9C6BE;stroke-width:1.2;stroke-dasharray:5 4}
+  .blue{fill:#E7EFF9;stroke:#1F5FAD;stroke-width:1.6}
+  .green{fill:#E6F4EC;stroke:#1B7F4B;stroke-width:1.6}
+  .orange{fill:#FCEFE0;stroke:#B25E09;stroke-width:1.6}
+  .red{fill:#FCEBEA;stroke:#B42318;stroke-width:1.6}
+  .purple{fill:#F1EAFB;stroke:#6E3FB0;stroke-width:1.6}
+  .yellow{fill:#FFF3C4;stroke:#A07800;stroke-width:1.6}
+  .c-blue{fill:#1F5FAD}.c-green{fill:#1B7F4B}.c-orange{fill:#B25E09}.c-red{fill:#B42318}.c-purple{fill:#6E3FB0}.c-muted{fill:#5B6069}
+  .ln{stroke:#6B7078;stroke-width:1.6;fill:none}
+  .ln-blue{stroke:#1F5FAD}.ln-green{stroke:#1B7F4B}.ln-red{stroke:#B42318}.ln-orange{stroke:#B25E09}.ln-purple{stroke:#6E3FB0}
+  .dash{stroke-dasharray:6 5}
+  .ah{fill:#6B7078}.ah-blue{fill:#1F5FAD}.ah-green{fill:#1B7F4B}.ah-red{fill:#B42318}.ah-orange{fill:#B25E09}.ah-purple{fill:#6E3FB0}
+  @media (prefers-color-scheme:dark){
+    text{fill:#E8E6E1}
+    .bg{fill:#1A1C20}
+    .ts{fill:#A9A69F}
+    .box{fill:#24262B;stroke:#6B6E76}
+    .zone{fill:#1F2125;stroke:#43464D}
+    .blue{fill:#1B2940;stroke:#7FB0F0}
+    .green{fill:#16281E;stroke:#5FC98E}
+    .orange{fill:#2E2215;stroke:#E8A05A}
+    .red{fill:#301A18;stroke:#F08A80}
+    .purple{fill:#251C33;stroke:#C3A0F0}
+    .yellow{fill:#2E2812;stroke:#E3C45C}
+    .c-blue{fill:#9CC4F5}.c-green{fill:#7ED3A3}.c-orange{fill:#EDB27A}.c-red{fill:#F4A39B}.c-purple{fill:#D2B8F4}.c-muted{fill:#A9A69F}
+    .ln{stroke:#8D9098}
+    .ln-blue{stroke:#7FB0F0}.ln-green{stroke:#5FC98E}.ln-red{stroke:#F08A80}.ln-orange{stroke:#E8A05A}.ln-purple{stroke:#C3A0F0}
+    .ah{fill:#8D9098}.ah-blue{fill:#7FB0F0}.ah-green{fill:#5FC98E}.ah-red{fill:#F08A80}.ah-orange{fill:#E8A05A}.ah-purple{fill:#C3A0F0}
+  }
+</style>
+<defs>
+  <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ah" d="M0,0 L10,5 L0,10 z"/></marker>
+  <marker id="arrow-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ah-blue" d="M0,0 L10,5 L0,10 z"/></marker>
+  <marker id="arrow-red" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ah-red" d="M0,0 L10,5 L0,10 z"/></marker>
+  <marker id="arrow-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ah-green" d="M0,0 L10,5 L0,10 z"/></marker>
+  <marker id="arrow-orange" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ah-orange" d="M0,0 L10,5 L0,10 z"/></marker>
+  <marker id="arrow-purple" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ah-purple" d="M0,0 L10,5 L0,10 z"/></marker>
+</defs>
+<rect class="bg" x="0" y="0" width="860" height="508"/>
+<text class="th" x="24" y="36">HTTP 요청 한 번의 왕복 — IGW 가 주소를 바꾼다</text>
+<text class="ts" x="24" y="58">위 = 요청(파랑, 왼→오) · 아래 = 응답(초록, 오→왼) · 노란 칸 = 방금 바뀐 주소</text>
+<line class="ln" stroke-opacity="0.35" x1="79.0" y1="156" x2="79.0" y2="434"/>
+<line class="ln" stroke-opacity="0.35" x1="213.0" y1="156" x2="213.0" y2="434"/>
+<line class="ln" stroke-opacity="0.35" x1="384.0" y1="156" x2="384.0" y2="434"/>
+<line class="ln" stroke-opacity="0.35" x1="594.0" y1="156" x2="594.0" y2="434"/>
+<line class="ln" stroke-opacity="0.35" x1="774.0" y1="156" x2="774.0" y2="434"/>
+<rect class="box" x="24" y="70" width="110" height="86" rx="10"/>
+<text x="79.0" y="99" text-anchor="middle" class="tb">브라우저</text>
+<text x="79.0" y="118" text-anchor="middle" class="mono">192.0.2.10</text>
+<text x="79.0" y="137" text-anchor="middle" class="ts">내 PC</text>
+<rect class="box" x="158" y="70" width="110" height="86" rx="10"/>
+<text x="213.0" y="99" text-anchor="middle" class="tb">인터넷</text>
+<text x="213.0" y="118" text-anchor="middle" class="ts">주소를</text>
+<text x="213.0" y="137" text-anchor="middle" class="ts">그대로 전달</text>
+<rect class="box" x="302" y="70" width="164" height="86" rx="10"/>
+<text x="384.0" y="90" text-anchor="middle" class="tb">Internet Gateway</text>
+<text x="384.0" y="108" text-anchor="middle" class="ts">1:1 NAT</text>
+<text x="384.0" y="128" text-anchor="middle" class="mono">203.0.113.25</text>
+<text x="384.0" y="146" text-anchor="middle" class="mono">↔ 10.0.1.25</text>
+<rect class="box" x="526" y="70" width="136" height="86" rx="10"/>
+<text x="594.0" y="99" text-anchor="middle" class="tb">Security Group</text>
+<text x="594.0" y="118" text-anchor="middle" class="ts">인스턴스 문 앞</text>
+<text x="594.0" y="137" text-anchor="middle" class="ts">경비원</text>
+<rect class="box" x="712" y="70" width="124" height="86" rx="10"/>
+<text x="774.0" y="99" text-anchor="middle" class="tb">EC2 · nginx</text>
+<text x="774.0" y="118" text-anchor="middle" class="mono">10.0.1.25:80</text>
+<text x="774.0" y="137" text-anchor="middle" class="ts">사설 IP 만 앎</text>
+<path class="ln ln-blue" d="M79.0,254 H774.0 V276" marker-end="url(#arrow-blue)"/>
+<path class="ln ln-green" d="M774.0,326 V424 H83.0" marker-end="url(#arrow-green)"/>
+<rect class="bg" x="129.0" y="158" width="120" height="27"/>
+<text class="ts" x="135.0" y="178">① 브라우저가 보냄</text>
+<rect class="blue" x="135.0" y="186" width="192" height="57" rx="8"/>
+<text class="ts" x="149.0" y="208">출발</text><text class="mono" x="183.0" y="208">192.0.2.10:51514</text>
+<text class="ts" x="149.0" y="231">도착</text><text class="mono" x="183.0" y="231">203.0.113.25:80</text>
+<text class="ts" x="393.0" y="178">② IGW 가 도착 주소를 바꿈</text>
+<rect class="blue" x="393.0" y="186" width="192" height="57" rx="8"/>
+<rect class="yellow" x="399.0" y="212" width="180" height="28" rx="4"/>
+<text class="ts" x="407.0" y="208">출발</text><text class="mono" x="441.0" y="208">192.0.2.10:51514</text>
+<text class="ts" x="407.0" y="231">도착</text><text class="mono" x="441.0" y="231">10.0.1.25:80</text>
+<rect class="green" x="508.0" y="276" width="172" height="50" rx="8"/>
+<text class="mono c-green" x="594.0" y="296" text-anchor="middle">tcp 80 ← 0.0.0.0/0</text>
+<text class="ts c-green" x="594.0" y="316" text-anchor="middle">③ 이 규칙으로 허용</text>
+<rect class="green" x="716.0" y="276" width="116" height="50" rx="8"/>
+<text class="tb c-green" x="774.0" y="296" text-anchor="middle">④ 200 OK</text>
+<text class="ts" x="774.0" y="316" text-anchor="middle">본문 OK</text>
+<text class="ts" x="393.0" y="348">⑤ nginx 의 응답 (주소 그대로)</text>
+<rect class="green" x="393.0" y="356" width="192" height="57" rx="8"/>
+<text class="ts" x="407.0" y="378">출발</text><text class="mono" x="441.0" y="378">10.0.1.25:80</text>
+<text class="ts" x="407.0" y="401">도착</text><text class="mono" x="441.0" y="401">192.0.2.10:51514</text>
+<rect class="bg" x="129.0" y="328" width="168" height="27"/>
+<text class="ts" x="135.0" y="348">⑥ IGW 가 출발 주소를 바꿈</text>
+<rect class="green" x="135.0" y="356" width="192" height="57" rx="8"/>
+<rect class="yellow" x="141.0" y="358" width="180" height="28" rx="4"/>
+<text class="ts" x="149.0" y="378">출발</text><text class="mono" x="183.0" y="378">203.0.113.25:80</text>
+<text class="ts" x="149.0" y="401">도착</text><text class="mono" x="183.0" y="401">192.0.2.10:51514</text>
+<text class="ts" x="393.0" y="452">SG: 아웃바운드 전체 허용 규칙으로 통과 (이 흐름은 추적 안 함 · §3.8)</text>
+<text class="ts" x="393.0" y="471">라우팅 표: <tspan class="mono">0.0.0.0/0 → igw-…</tspan> 로 나감 (이 줄이 없으면 응답이 못 나간다)</text>
+<text class="ts" x="24" y="496">203.0.113.25 = 가짜 CLI 의 PUBLIC_IP (tests/fake_aws.py) · 10.0.1.25 · 192.0.2.10 · 51514 는 설명용 예시 값</text>
+</svg>

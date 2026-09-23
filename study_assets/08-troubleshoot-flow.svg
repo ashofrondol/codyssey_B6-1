@@ -1,0 +1,117 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="860" height="596" viewBox="0 0 860 596" role="img" aria-labelledby="title desc">
+<title id="title">외부 접속이 안 될 때 — 실패 모양으로 먼저 갈래를 나눈다</title>
+<desc id="desc">내 PC 에서 curl -v -m 5 로 /health 를 불러 실패 모양을 본다. 시간 초과(curl 28)면 패킷이 중간에서 버려진 것이므로 라우팅 → 보안 그룹 → 퍼블릭 IP/DNS(이름이 그 IP 로 풀리는지) 순으로, 연결 거부(curl 7)면 서버까지는 닿았으므로 nginx 프로세스·포트·cloud-init 로그를, HTTP 응답이 오면 nginx 설정과 경로를 본다. 어느 갈래든 원인 하나를 확정해 하나만 고치고 04_verify.sh 로 다시 확인한 뒤 결과와 재발 방지를 기록한다.</desc>
+<style>
+  text{font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR","Noto Sans CJK KR",sans-serif;font-size:15px;fill:#1D1F23}
+  .bg{fill:#FFFFFF}
+  .ts{font-size:13px;fill:#5B6069}
+  .th{font-size:17px;font-weight:700}
+  .tb{font-weight:700}
+  .mono{font-family:"IBM Plex Mono",ui-monospace,Menlo,Consolas,"Noto Sans Mono CJK KR",monospace;font-size:13.5px}
+  .box{fill:#F4F3EF;stroke:#9A9CA3;stroke-width:1.5}
+  .zone{fill:#FAF9F6;stroke:#C9C6BE;stroke-width:1.2;stroke-dasharray:5 4}
+  .blue{fill:#E7EFF9;stroke:#1F5FAD;stroke-width:1.6}
+  .green{fill:#E6F4EC;stroke:#1B7F4B;stroke-width:1.6}
+  .orange{fill:#FCEFE0;stroke:#B25E09;stroke-width:1.6}
+  .red{fill:#FCEBEA;stroke:#B42318;stroke-width:1.6}
+  .purple{fill:#F1EAFB;stroke:#6E3FB0;stroke-width:1.6}
+  .yellow{fill:#FFF3C4;stroke:#A07800;stroke-width:1.6}
+  .c-blue{fill:#1F5FAD}.c-green{fill:#1B7F4B}.c-orange{fill:#B25E09}.c-red{fill:#B42318}.c-purple{fill:#6E3FB0}.c-muted{fill:#5B6069}
+  .ln{stroke:#6B7078;stroke-width:1.6;fill:none}
+  .ln-blue{stroke:#1F5FAD}.ln-green{stroke:#1B7F4B}.ln-red{stroke:#B42318}.ln-orange{stroke:#B25E09}.ln-purple{stroke:#6E3FB0}
+  .dash{stroke-dasharray:6 5}
+  .ah{fill:#6B7078}.ah-blue{fill:#1F5FAD}.ah-green{fill:#1B7F4B}.ah-red{fill:#B42318}.ah-orange{fill:#B25E09}.ah-purple{fill:#6E3FB0}
+  @media (prefers-color-scheme:dark){
+    text{fill:#E8E6E1}
+    .bg{fill:#1A1C20}
+    .ts{fill:#A9A69F}
+    .box{fill:#24262B;stroke:#6B6E76}
+    .zone{fill:#1F2125;stroke:#43464D}
+    .blue{fill:#1B2940;stroke:#7FB0F0}
+    .green{fill:#16281E;stroke:#5FC98E}
+    .orange{fill:#2E2215;stroke:#E8A05A}
+    .red{fill:#301A18;stroke:#F08A80}
+    .purple{fill:#251C33;stroke:#C3A0F0}
+    .yellow{fill:#2E2812;stroke:#E3C45C}
+    .c-blue{fill:#9CC4F5}.c-green{fill:#7ED3A3}.c-orange{fill:#EDB27A}.c-red{fill:#F4A39B}.c-purple{fill:#D2B8F4}.c-muted{fill:#A9A69F}
+    .ln{stroke:#8D9098}
+    .ln-blue{stroke:#7FB0F0}.ln-green{stroke:#5FC98E}.ln-red{stroke:#F08A80}.ln-orange{stroke:#E8A05A}.ln-purple{stroke:#C3A0F0}
+    .ah{fill:#8D9098}.ah-blue{fill:#7FB0F0}.ah-green{fill:#5FC98E}.ah-red{fill:#F08A80}.ah-orange{fill:#E8A05A}.ah-purple{fill:#C3A0F0}
+  }
+</style>
+<defs>
+  <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ah" d="M0,0 L10,5 L0,10 z"/></marker>
+  <marker id="arrow-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ah-blue" d="M0,0 L10,5 L0,10 z"/></marker>
+  <marker id="arrow-red" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ah-red" d="M0,0 L10,5 L0,10 z"/></marker>
+  <marker id="arrow-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ah-green" d="M0,0 L10,5 L0,10 z"/></marker>
+  <marker id="arrow-orange" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ah-orange" d="M0,0 L10,5 L0,10 z"/></marker>
+  <marker id="arrow-purple" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ah-purple" d="M0,0 L10,5 L0,10 z"/></marker>
+</defs>
+<rect class="bg" x="0" y="0" width="860" height="596"/>
+<text class="th" x="24" y="36">외부 접속이 안 될 때 — 실패 모양으로 먼저 갈래를 나눈다</text>
+<text class="ts" x="24" y="58">주황 = 네트워크 쪽 의심 · 빨강 = 서버 쪽 의심 · 회색 = nginx 는 살아 있음 · 초록 = 마무리</text>
+
+<!-- 시작 -->
+<rect class="box" x="264" y="74" width="360" height="52" rx="10"/>
+<text x="444" y="95" text-anchor="middle" class="ts">내 PC 에서 한 번 불러 본다</text>
+<text x="444" y="116" text-anchor="middle" class="mono">curl -v -m 5 http://&lt;퍼블릭IP&gt;/health</text>
+
+<path class="ln" d="M444,127 V142 H156 V155" marker-end="url(#arrow)"/>
+<path class="ln" d="M444,127 V155" marker-end="url(#arrow)"/>
+<path class="ln" d="M444,142 H718 V155" marker-end="url(#arrow)"/>
+
+<!-- 갈래 A: 시간 초과 -->
+<rect class="orange" x="24" y="160" width="264" height="78" rx="10"/>
+<text x="156" y="183" text-anchor="middle" class="tb c-orange">A. 시간 초과</text>
+<text x="156" y="205" text-anchor="middle" class="mono">curl: (28) … timed out</text>
+<text x="156" y="226" text-anchor="middle" class="ts">패킷이 중간에서 버려짐</text>
+
+<line class="ln ln-orange" x1="156" y1="239" x2="156" y2="259" marker-end="url(#arrow-orange)"/>
+<rect class="orange" x="24" y="264" width="264" height="50" rx="8"/>
+<text x="40" y="285" class="tb">① 라우팅 <tspan class="ts">(N4 · N6)</tspan></text>
+<text x="40" y="304"><tspan class="mono">0.0.0.0/0 → igw</tspan><tspan class="ts"> 경로? 서브넷 연결?</tspan></text>
+<line class="ln ln-orange" x1="156" y1="315" x2="156" y2="333" marker-end="url(#arrow-orange)"/>
+<text x="166" y="330" class="ts">이상 없으면</text>
+<rect class="orange" x="24" y="338" width="264" height="50" rx="8"/>
+<text x="40" y="359" class="tb">② 보안 그룹 <tspan class="ts">(S1~S4 절)</tspan></text>
+<text x="40" y="378" class="mono">tcp 80 ← 0.0.0.0/0 ?</text>
+<line class="ln ln-orange" x1="156" y1="389" x2="156" y2="407" marker-end="url(#arrow-orange)"/>
+<text x="166" y="404" class="ts">이상 없으면</text>
+<rect class="orange" x="24" y="412" width="264" height="68" rx="8"/>
+<text x="40" y="433" class="tb">③ 퍼블릭 IP / DNS</text>
+<text x="40" y="452" class="ts">IP 가 있나? 중지·시작 뒤 바뀌었나?</text>
+<text x="40" y="471" class="ts">이름으로 접속하면 그 IP 로 풀리나?</text>
+
+<!-- 갈래 B: 연결 거부 -->
+<rect class="red" x="304" y="160" width="280" height="78" rx="10"/>
+<text x="444" y="183" text-anchor="middle" class="tb c-red">B. 연결 거부</text>
+<text x="444" y="205" text-anchor="middle" class="mono">curl: (7) … Could not connect</text>
+<text x="444" y="226" text-anchor="middle" class="ts">도착했지만 80 을 듣는 프로세스 없음</text>
+
+<line class="ln ln-red" x1="444" y1="239" x2="444" y2="259" marker-end="url(#arrow-red)"/>
+<rect class="red" x="304" y="264" width="280" height="102" rx="8"/>
+<text x="318" y="286" class="tb">④ 서버 프로세스 <tspan class="ts">(E3)</tspan></text>
+<text x="318" y="308" class="mono">systemctl is-active nginx</text>
+<text x="318" y="330" class="mono">ss -tlnp</text>
+<text x="318" y="352" class="mono">/var/log/cloud-init-output.log</text>
+
+<!-- 갈래 C: HTTP 응답은 옴 -->
+<rect class="box" x="600" y="160" width="236" height="78" rx="10"/>
+<text x="718" y="183" text-anchor="middle" class="tb">C. HTTP 응답은 옴</text>
+<text x="718" y="205" text-anchor="middle" class="mono">404 · 502 …</text>
+<text x="718" y="226" text-anchor="middle" class="ts">nginx 는 살아 있음</text>
+
+<line class="ln" x1="718" y1="239" x2="718" y2="259" marker-end="url(#arrow)"/>
+<rect class="box" x="600" y="264" width="236" height="50" rx="8"/>
+<text x="718" y="285" text-anchor="middle" class="tb">설정 · 경로 확인</text>
+<text x="718" y="304" text-anchor="middle" class="ts">nginx 설정 · 요청한 주소</text>
+
+<!-- 합류 -->
+<line class="ln" x1="156" y1="481" x2="156" y2="499" marker-end="url(#arrow)"/>
+<line class="ln" x1="444" y1="367" x2="444" y2="499" marker-end="url(#arrow)"/>
+<line class="ln" x1="718" y1="315" x2="718" y2="499" marker-end="url(#arrow)"/>
+<rect class="green" x="120" y="504" width="648" height="42" rx="10"/>
+<text x="444" y="530" text-anchor="middle" class="c-green">원인 하나 확정 → 하나만 고침 → <tspan class="mono">04_verify.sh</tspan> 다시 → 결과·재발방지 기록</text>
+
+<text x="430" y="572" text-anchor="middle" class="ts">바깥에서 안쪽으로: 라우팅 → SG → 퍼블릭 IP/DNS → 서버 프로세스/로그</text>
+</svg>

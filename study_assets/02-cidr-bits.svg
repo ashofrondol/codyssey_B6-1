@@ -1,0 +1,123 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="820" height="420" viewBox="0 0 820 420" role="img" aria-labelledby="title desc">
+<title id="title">CIDR — 슬래시 뒤 숫자는 앞에서부터 고정한 비트 수</title>
+<desc id="desc">IPv4 주소 10.0.1.25 는 8비트 칸 4개, 모두 32비트다. /16 은 앞 두 칸을 고정해 65,536개, /24 는 세 칸을 고정해 256개(AWS 예약 5개를 빼면 251개), /32 는 네 칸 모두 고정해 1개, /0 은 아무것도 고정하지 않아 모든 주소를 뜻한다. 고정한 칸이 많을수록 범위가 좁다.</desc>
+<style>
+  text{font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR","Noto Sans CJK KR",sans-serif;font-size:15px;fill:#1D1F23}
+  .bg{fill:#FFFFFF}
+  .ts{font-size:13px;fill:#5B6069}
+  .th{font-size:17px;font-weight:700}
+  .tb{font-weight:700}
+  .mono{font-family:"IBM Plex Mono",ui-monospace,Menlo,Consolas,"Noto Sans Mono CJK KR",monospace;font-size:13.5px}
+  .box{fill:#F4F3EF;stroke:#9A9CA3;stroke-width:1.5}
+  .zone{fill:#FAF9F6;stroke:#C9C6BE;stroke-width:1.2;stroke-dasharray:5 4}
+  .blue{fill:#E7EFF9;stroke:#1F5FAD;stroke-width:1.6}
+  .green{fill:#E6F4EC;stroke:#1B7F4B;stroke-width:1.6}
+  .orange{fill:#FCEFE0;stroke:#B25E09;stroke-width:1.6}
+  .red{fill:#FCEBEA;stroke:#B42318;stroke-width:1.6}
+  .purple{fill:#F1EAFB;stroke:#6E3FB0;stroke-width:1.6}
+  .yellow{fill:#FFF3C4;stroke:#A07800;stroke-width:1.6}
+  .c-blue{fill:#1F5FAD}.c-green{fill:#1B7F4B}.c-orange{fill:#B25E09}.c-red{fill:#B42318}.c-purple{fill:#6E3FB0}.c-muted{fill:#5B6069}
+  .ln{stroke:#6B7078;stroke-width:1.6;fill:none}
+  .ln-blue{stroke:#1F5FAD}.ln-green{stroke:#1B7F4B}.ln-red{stroke:#B42318}.ln-orange{stroke:#B25E09}.ln-purple{stroke:#6E3FB0}
+  .dash{stroke-dasharray:6 5}
+  .ah{fill:#6B7078}.ah-blue{fill:#1F5FAD}.ah-green{fill:#1B7F4B}.ah-red{fill:#B42318}.ah-orange{fill:#B25E09}.ah-purple{fill:#6E3FB0}
+  @media (prefers-color-scheme:dark){
+    text{fill:#E8E6E1}
+    .bg{fill:#1A1C20}
+    .ts{fill:#A9A69F}
+    .box{fill:#24262B;stroke:#6B6E76}
+    .zone{fill:#1F2125;stroke:#43464D}
+    .blue{fill:#1B2940;stroke:#7FB0F0}
+    .green{fill:#16281E;stroke:#5FC98E}
+    .orange{fill:#2E2215;stroke:#E8A05A}
+    .red{fill:#301A18;stroke:#F08A80}
+    .purple{fill:#251C33;stroke:#C3A0F0}
+    .yellow{fill:#2E2812;stroke:#E3C45C}
+    .c-blue{fill:#9CC4F5}.c-green{fill:#7ED3A3}.c-orange{fill:#EDB27A}.c-red{fill:#F4A39B}.c-purple{fill:#D2B8F4}.c-muted{fill:#A9A69F}
+    .ln{stroke:#8D9098}
+    .ln-blue{stroke:#7FB0F0}.ln-green{stroke:#5FC98E}.ln-red{stroke:#F08A80}.ln-orange{stroke:#E8A05A}.ln-purple{stroke:#C3A0F0}
+    .ah{fill:#8D9098}.ah-blue{fill:#7FB0F0}.ah-green{fill:#5FC98E}.ah-red{fill:#F08A80}.ah-orange{fill:#E8A05A}.ah-purple{fill:#C3A0F0}
+  }
+</style>
+<defs>
+  <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ah" d="M0,0 L10,5 L0,10 z"/></marker>
+  <marker id="arrow-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ah-blue" d="M0,0 L10,5 L0,10 z"/></marker>
+  <marker id="arrow-red" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ah-red" d="M0,0 L10,5 L0,10 z"/></marker>
+  <marker id="arrow-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ah-green" d="M0,0 L10,5 L0,10 z"/></marker>
+  <marker id="arrow-orange" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ah-orange" d="M0,0 L10,5 L0,10 z"/></marker>
+  <marker id="arrow-purple" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ah-purple" d="M0,0 L10,5 L0,10 z"/></marker>
+</defs>
+<rect class="bg" x="0" y="0" width="820" height="420"/>
+<text class="th" x="24" y="36">CIDR — 슬래시 뒤 숫자 = 앞에서부터 고정한 비트 수</text>
+<text class="ts" x="24" y="58">노란 칸 = 고정(네트워크 부분) · ‘자유’ 칸 = 아무 값이나(호스트 부분) · 한 칸 = 8비트</text>
+<text class="ts" x="24" y="102">주소</text>
+<rect class="box" x="88" y="76" width="88" height="40" rx="6"/>
+<text class="tb" x="132" y="101" text-anchor="middle">10</text>
+<text class="mono" x="132" y="136" text-anchor="middle">00001010</text>
+<rect class="box" x="184" y="76" width="88" height="40" rx="6"/>
+<text class="tb" x="228" y="101" text-anchor="middle">0</text>
+<text class="mono" x="228" y="136" text-anchor="middle">00000000</text>
+<rect class="box" x="280" y="76" width="88" height="40" rx="6"/>
+<text class="tb" x="324" y="101" text-anchor="middle">1</text>
+<text class="mono" x="324" y="136" text-anchor="middle">00000001</text>
+<rect class="box" x="376" y="76" width="88" height="40" rx="6"/>
+<text class="tb" x="420" y="101" text-anchor="middle">25</text>
+<text class="mono" x="420" y="136" text-anchor="middle">00011001</text>
+<text class="tb" x="180" y="106" text-anchor="middle">.</text>
+<text class="tb" x="276" y="106" text-anchor="middle">.</text>
+<text class="tb" x="372" y="106" text-anchor="middle">.</text>
+<text class="ts" x="488" y="101">IPv4 = 32비트 = 8비트 × 4칸</text>
+<text class="ts" x="488" y="136">2진수로 쓰면 0/1 이 32개</text>
+<text class="mono tb" x="24" y="185">/16</text>
+<rect class="yellow" x="88" y="160" width="88" height="40" rx="6"/>
+<text class="tb" x="132" y="185" text-anchor="middle">10</text>
+<rect class="yellow" x="184" y="160" width="88" height="40" rx="6"/>
+<text class="tb" x="228" y="185" text-anchor="middle">0</text>
+<rect class="bg" x="280" y="160" width="88" height="40" rx="6"/>
+<rect class="ln" x="280" y="160" width="88" height="40" rx="6"/>
+<text class="ts" x="324" y="185" text-anchor="middle">자유</text>
+<rect class="bg" x="376" y="160" width="88" height="40" rx="6"/>
+<rect class="ln" x="376" y="160" width="88" height="40" rx="6"/>
+<text class="ts" x="420" y="185" text-anchor="middle">자유</text>
+<text x="488" y="176"><tspan class="mono">10.0.0.0/16</tspan><tspan class="ts">  65,536개</tspan></text>
+<text class="ts" x="488" y="195">VPC 전체</text>
+<text class="mono tb" x="24" y="241">/24</text>
+<rect class="yellow" x="88" y="216" width="88" height="40" rx="6"/>
+<text class="tb" x="132" y="241" text-anchor="middle">10</text>
+<rect class="yellow" x="184" y="216" width="88" height="40" rx="6"/>
+<text class="tb" x="228" y="241" text-anchor="middle">0</text>
+<rect class="yellow" x="280" y="216" width="88" height="40" rx="6"/>
+<text class="tb" x="324" y="241" text-anchor="middle">1</text>
+<rect class="bg" x="376" y="216" width="88" height="40" rx="6"/>
+<rect class="ln" x="376" y="216" width="88" height="40" rx="6"/>
+<text class="ts" x="420" y="241" text-anchor="middle">자유</text>
+<text x="488" y="232"><tspan class="mono">10.0.1.0/24</tspan><tspan class="ts">  256개</tspan></text>
+<text class="ts" x="488" y="251">Public Subnet · 실제 사용 251개 (AWS 예약 5개)</text>
+<text class="mono tb" x="24" y="297">/32</text>
+<rect class="yellow" x="88" y="272" width="88" height="40" rx="6"/>
+<text class="tb" x="132" y="297" text-anchor="middle">198</text>
+<rect class="yellow" x="184" y="272" width="88" height="40" rx="6"/>
+<text class="tb" x="228" y="297" text-anchor="middle">51</text>
+<rect class="yellow" x="280" y="272" width="88" height="40" rx="6"/>
+<text class="tb" x="324" y="297" text-anchor="middle">100</text>
+<rect class="yellow" x="376" y="272" width="88" height="40" rx="6"/>
+<text class="tb" x="420" y="297" text-anchor="middle">7</text>
+<text x="488" y="288"><tspan class="mono">198.51.100.7/32</tspan><tspan class="ts c-green">  1개 (가장 좁음)</tspan></text>
+<text class="ts" x="488" y="307">SSH 허용 소스 — 관리자 PC 한 대</text>
+<text class="mono tb" x="24" y="353">/0</text>
+<rect class="bg" x="88" y="328" width="88" height="40" rx="6"/>
+<rect class="ln" x="88" y="328" width="88" height="40" rx="6"/>
+<text class="ts" x="132" y="353" text-anchor="middle">자유</text>
+<rect class="bg" x="184" y="328" width="88" height="40" rx="6"/>
+<rect class="ln" x="184" y="328" width="88" height="40" rx="6"/>
+<text class="ts" x="228" y="353" text-anchor="middle">자유</text>
+<rect class="bg" x="280" y="328" width="88" height="40" rx="6"/>
+<rect class="ln" x="280" y="328" width="88" height="40" rx="6"/>
+<text class="ts" x="324" y="353" text-anchor="middle">자유</text>
+<rect class="bg" x="376" y="328" width="88" height="40" rx="6"/>
+<rect class="ln" x="376" y="328" width="88" height="40" rx="6"/>
+<text class="ts" x="420" y="353" text-anchor="middle">자유</text>
+<text x="488" y="344"><tspan class="mono">0.0.0.0/0</tspan><tspan class="ts c-orange">  4,294,967,296개 (전부)</tspan></text>
+<text class="ts" x="488" y="363">HTTP 허용 소스 · 기본 경로(0.0.0.0/0 → igw)</text>
+<text class="ts" x="24" y="400">개수 = 2^(32 − 접두사) · /16 안에 /24 는 256개 들어간다 · AWS 예약: 10.0.1.0 · .1 · .2 · .3 · .255</text>
+</svg>
