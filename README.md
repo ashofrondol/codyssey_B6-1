@@ -385,6 +385,29 @@ AWS 에서 **VPC 로 격리된 네트워크를 직접 설계**하고, Public Sub
 
 > 점검 방식: 저장소의 실제 소스를 명세의 요구사항 ID 와 1:1 대조. 판정 근거는 파일 경로로 명시.
 
+> ### ✅ 2026-10-29 실행 기록 (이 절의 판정을 갱신한다)
+>
+> 서울 리전(`ap-northeast-2`) 실계정에서 `01 → 02 → 03 → 04 → 99` 를 **처음으로 끝까지 실행**했다.
+> IAM 사용자 `codyssey`(정책 `codyssey` 하나만 연결)로 실행했고, 결과는 아래와 같다.
+>
+> - `bash infra/04_verify.sh` → **PASS 18 / FAIL 0 / SKIP 0**, 종료 코드 0 (전문: [`docs/verification.txt`](docs/verification.txt))
+> - 외부 접속: `http://3.38.94.117/` 200, `GET /health` → `200` + 본문 `OK`
+> - SSH·nginx·localhost 200·아웃바운드(`curl https://example.com` 200) 까지 전부 PASS
+> - 고장 재현 1건(80 규칙 제거 → 타임아웃·FAIL 3 → 복구 → FAIL 0)을 실제 출력으로 기록: [`docs/troubleshooting.md`](docs/troubleshooting.md)
+>
+> 아래 표는 **실행 전 코드 대조 결과**다. 그래서 "로컬 검증 불가"·"증빙 없음" 판정은 그대로 남겨 두었다
+> (당시 판정을 지우면 무엇이 언제 바뀌었는지가 사라진다). 실행 후 바뀐 항목은 다음과 같다.
+>
+> | ID | 실행 전 | 실행 후 |
+> | --- | --- | --- |
+> | R1-1 ~ R2-4 | ⬜ 로컬 검증 불가 | ✅ 실측 PASS (N1~N6, E1~E4) |
+> | R5-1 외부 접속 증빙 | ❌ 미충족 | ✅ 실측 200 (`verification.txt`) |
+> | R5-2 접속 정보 | 🟡 플레이스홀더 | ✅ 실제 IP 기재 (README 「3. 외부 접속 검증」) |
+> | R6-1/R6-2 정리 근거 | ❌/🟡 공란 | ✅ 같은 날 `99_cleanup.sh --yes` 실행, 종료 코드 0 — 잔여 8종 `남은 것 없음`, 태그 재조회 `[]`, `http://3.38.94.117` 연결 실패 확인 ([`docs/cleanup-checklist.md`](docs/cleanup-checklist.md) 4절) |
+> | R4-1 IAM 증빙 | ⬜ 없음 | ✅ `04_verify.sh` 의 연결 정책 줄(`codyssey`) — 콘솔 캡처는 미실시 |
+> | 제출물 2 (스크린샷) | ❌ 0장 | 🟡 `01-browser.png`·`02-health.png` = 실제 페이지를 헤드리스 Chromium 으로 캡처(주소창 없음). URL·상태코드 증거는 `verification.txt` |
+> | 제출물 3 (트러블슈팅) | 🟡 `결과` 공란 | ✅ 사례 1 전 단계 실측 완료 |
+
 **종합 판정: 부분 충족** — 필수 20개 중 충족 6 / 부분 2 / 미충족 2 / 로컬검증불가 10
 
 이 저장소는 **구축·검증·정리를 전부 자동화한 코드와 문서**로는 매우 완성도가 높다.
@@ -579,14 +602,15 @@ AWS 에서 **VPC 로 격리된 네트워크를 직접 설계**하고, Public Sub
 ## ⚠ 제출 전에 채워야 하는 곳
 
 이 저장소는 **구성·검증·정리를 자동화한 코드와 문서**까지 완성돼 있다.
-아래 세 가지는 **본인 AWS 계정에서 실행해야만** 나오는 값이라 비어 있다.
+2026-10-29 에 실계정 실행을 마치면서 아래 값은 **실제 값으로 채워졌다**.
 
-| 채울 곳 | 무엇을 |
+| 채울 곳 | 상태 |
 | --- | --- |
-| 이 README 의 「외부 접속 검증」 절 | 선택한 방식(A/B)과 **실제 퍼블릭 IP** |
-| [`docs/screenshots/`](docs/screenshots/) | 접속 결과 스크린샷 **1장 이상** |
-| [`docs/troubleshooting.md`](docs/troubleshooting.md) 의 `결과` 칸 | 실제 실행 로그 |
-| [`docs/cleanup-checklist.md`](docs/cleanup-checklist.md) 4절 | 정리 실행 결과 |
+| 이 README 의 「외부 접속 검증」 절 | ✅ 실제 퍼블릭 IP 기재 |
+| [`docs/verification.txt`](docs/verification.txt) | ✅ `04_verify.sh` 실행 출력 (PASS 18 / FAIL 0 / SKIP 0) |
+| [`docs/troubleshooting.md`](docs/troubleshooting.md) 의 `결과` 칸 | ✅ 사례 1 실측 기록 |
+| [`docs/cleanup-checklist.md`](docs/cleanup-checklist.md) 4절 | ✅ 정리 실행 결과 기록 (2026-10-29, 종료 코드 0) |
+| [`docs/screenshots/`](docs/screenshots/) | 🟡 실제 페이지 캡처 2장(헤드리스 — 주소창 없음) |
 
 `bash infra/04_verify.sh | tee docs/verification.txt` 한 번이면 위 값 대부분이 파일로 남는다.
 
@@ -684,19 +708,24 @@ bash infra/99_cleanup.sh
 
 | 항목 | 값 |
 | --- | --- |
-| 퍼블릭 IP | `<배포 후 채우기 — infra/.state 의 PUBLIC_IP>` |
-| 접속 URL (A) | `http://<퍼블릭IP>/` |
-| 헬스체크 URL (B) | `http://<퍼블릭IP>/health` |
+| 퍼블릭 IP | `3.38.94.117` (2026-10-29 시연 당시. 인스턴스 종료 후 반납된다) |
+| 접속 URL (A) | `http://3.38.94.117/` |
+| 헬스체크 URL (B) | `http://3.38.94.117/health` |
 | 기대 응답 | `200 OK` / 본문 `OK` |
 
 ```bash
-$ curl -i http://<퍼블릭IP>/health
+$ curl -si http://3.38.94.117/health
 HTTP/1.1 200 OK
-Server: nginx
+Server: nginx/1.30.6
+Date: Wed, 28 Oct 2026 16:26:41 GMT
 Content-Type: text/plain
+Content-Length: 3
+Connection: keep-alive
 
 OK
 ```
+
+전체 판정은 [`docs/verification.txt`](docs/verification.txt) 에 있다 — `결과: PASS 18 / FAIL 0 / SKIP 0`, 종료 코드 0.
 
 스크린샷은 [`docs/screenshots/`](docs/screenshots/) 에 넣는다 (넣을 목록은 그 폴더의 README 참고).
 
