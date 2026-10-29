@@ -51,17 +51,36 @@ README 가 주장하는 "다시 실행해도 새로 만들지 않는다"를 실�
 - **`03_instance.sh` 두 번**: `키페어 재사용: codyssey-b6-1-key` / `인스턴스 재사용: i-0b62a5be60394ddda`,
   퍼블릭 IP 도 동일(`3.36.49.64`). 인스턴스를 새로 만들지 않았다.
 
+
+## 3.5 추가 4회차 — 캡처용 (같은 날)
+
+주소창·콘솔 캡처를 위해 **한 번 더** 구축했다(3회 반복 검증과 별개). 이 회차의 `04_verify.sh` 출력이
+`docs/verification.txt` 이고, 캡처 이미지의 IP·인스턴스 ID 와 일치한다.
+
+| 항목 | 값 |
+| --- | --- |
+| 퍼블릭 IP | `54.180.148.80` (`GET /health` → 200 `OK`, `GET /` → 200) |
+| VPC / Subnet | `vpc-0b71924e37d97c07d` / `subnet-0f467b3cfed794273` |
+| IGW / Route Table | `igw-06b4060d5b31e0050` / `rtb-08eb174d165e5dff7` (`rtbassoc-07437fca8b2ad8b93`) |
+| Security Group | `sg-0fafe974baade1339` — 80 ← `0.0.0.0/0`, 22 ← `221.149.153.151/32` |
+| EC2 | `i-0351ca09a1dfecf29` (t3.micro) |
+| `04_verify.sh` | exit 0 · **PASS 18 / FAIL 0 / SKIP 0** → `docs/verification.txt` |
+| `99_cleanup.sh --yes` | exit 0 · 8종 `남은 것 없음` · 종료 시각 `2026-10-29 11:15:39 GMT` |
+
+이 회차에서 촬영한 캡처가 `docs/screenshots/01·02·03·04·05·08` 이다(계정 ID는 가렸다).
+`05-route-table.png` 는 목록 화면이라 **기본 경로 행은 찍히지 않았다** — 그 증거는 `verification.txt` 의 `B6-1-N4` 다.
+
 ## 4. 최종 상태 (3회차 정리 직후, 교차 확인)
 
 ```
-EC2(running/stopped 계열, 태그 Project=codyssey-b6-1): []
+EC2(running/stopped 계열, 태그 Project=codyssey-b6-1): []   ← 캡처용 회차 정리 후 재확인
 EBS:              []
 Elastic IP:       []
 Internet Gateway: []
 VPC:              []
 Security Group:   []
 키페어:            InvalidKeyPair.NotFound
-웹:               curl http://3.36.49.64/health → 000 (연결 실패 = 인스턴스 없음, 정상)
+웹:               curl http://54.180.148.80/health → 000 (연결 실패 = 인스턴스 없음, 정상)
 infra/.state:     없음
 git status:       clean
 ```

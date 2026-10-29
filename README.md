@@ -391,7 +391,7 @@ AWS 에서 **VPC 로 격리된 네트워크를 직접 설계**하고, Public Sub
 > IAM 사용자 `codyssey`(정책 `codyssey` 하나만 연결)로 실행했고, 결과는 아래와 같다.
 >
 > - `bash infra/04_verify.sh` → **PASS 18 / FAIL 0 / SKIP 0**, 종료 코드 0 (전문: [`docs/verification.txt`](docs/verification.txt))
-> - 외부 접속: `http://3.38.94.117/` 200, `GET /health` → `200` + 본문 `OK`
+> - 외부 접속: `http://54.180.148.80/` 200, `GET /health` → `200` + 본문 `OK`
 > - SSH·nginx·localhost 200·아웃바운드(`curl https://example.com` 200) 까지 전부 PASS
 > - 고장 재현 1건(80 규칙 제거 → 타임아웃·FAIL 3 → 복구 → FAIL 0)을 실제 출력으로 기록: [`docs/troubleshooting.md`](docs/troubleshooting.md)
 >
@@ -402,10 +402,10 @@ AWS 에서 **VPC 로 격리된 네트워크를 직접 설계**하고, Public Sub
 > | --- | --- | --- |
 > | R1-1 ~ R2-4 | ⬜ 로컬 검증 불가 | ✅ 실측 PASS (N1~N6, E1~E4) |
 > | R5-1 외부 접속 증빙 | ❌ 미충족 | ✅ 실측 200 (`verification.txt`) |
-> | R5-2 접속 정보 | 🟡 플레이스홀더 | ✅ 실제 IP 기재 (README 「3. 외부 접속 검증」) |
-> | R6-1/R6-2 정리 근거 | ❌/🟡 공란 | ✅ 같은 날 `99_cleanup.sh --yes` 실행, 종료 코드 0 — 잔여 8종 `남은 것 없음`, 태그 재조회 `[]`, `http://3.38.94.117` 연결 실패 확인 ([`docs/cleanup-checklist.md`](docs/cleanup-checklist.md) 4절) |
-> | R4-1 IAM 증빙 | ⬜ 없음 | ✅ `04_verify.sh` 의 연결 정책 줄(`codyssey`) — 콘솔 캡처는 미실시 |
-> | 제출물 2 (스크린샷) | ❌ 0장 | 🟡 `01-browser.png`·`02-health.png` = 실제 페이지를 헤드리스 Chromium 으로 캡처(주소창 없음). URL·상태코드 증거는 `verification.txt` |
+> | R5-2 접속 정보 | 🟡 플레이스홀더 | ✅ 실제 IP `54.180.148.80` 기재 (README 「3. 외부 접속 검증」) |
+> | R6-1/R6-2 정리 근거 | ❌/🟡 공란 | ✅ 같은 날 `99_cleanup.sh --yes` 실행, 종료 코드 0 — 잔여 8종 `남은 것 없음`, 태그 재조회 `[]`, `http://54.180.148.80` 연결 실패 확인 ([`docs/cleanup-checklist.md`](docs/cleanup-checklist.md) 4절) |
+> | R4-1 IAM 증빙 | ⬜ 없음 | ✅ `04_verify.sh` 의 연결 정책 줄(`codyssey`) + 콘솔 권한 탭 캡처 `screenshots/08-iam.png`(정책 1개, Directly) |
+> | 제출물 2 (스크린샷) | ❌ 0장 | ✅ 주소창이 보이는 브라우저 캡처 2장 + 콘솔 4장(`screenshots/`, 계정 ID 가림). IP `54.180.148.80` 은 `verification.txt` 와 일치 |
 > | 제출물 3 (트러블슈팅) | 🟡 `결과` 공란 | ✅ 사례 1 전 단계 실측 완료 |
 
 **2026-10-29 기준 판정: 필수 요구 전부 충족 — 실계정 3회 반복 검증 통과**
@@ -617,7 +617,7 @@ PASS 18 / FAIL 0 / SKIP 0 · 정리 종료 코드 0 · 태그 재조회 `[]` 를
 | [`docs/verification.txt`](docs/verification.txt) | ✅ `04_verify.sh` 실행 출력 (PASS 18 / FAIL 0 / SKIP 0) |
 | [`docs/troubleshooting.md`](docs/troubleshooting.md) 의 `결과` 칸 | ✅ 사례 1 실측 기록 |
 | [`docs/cleanup-checklist.md`](docs/cleanup-checklist.md) 4절 | ✅ 정리 실행 결과 기록 (2026-10-29, 종료 코드 0) |
-| [`docs/screenshots/`](docs/screenshots/) | 🟡 실제 페이지 캡처 2장(헤드리스 — 주소창 없음) |
+| [`docs/screenshots/`](docs/screenshots/) | ✅ 주소창 2장 + 콘솔 4장(계정 ID 가림) |
 
 `bash infra/04_verify.sh | tee docs/verification.txt` 한 번이면 위 값 대부분이 파일로 남는다.
 
@@ -715,20 +715,21 @@ bash infra/99_cleanup.sh
 
 | 항목 | 값 |
 | --- | --- |
-| 퍼블릭 IP | `3.38.94.117` (2026-10-29 시연 당시. 인스턴스 종료 후 반납된다) |
-| 접속 URL (A) | `http://3.38.94.117/` |
-| 헬스체크 URL (B) | `http://3.38.94.117/health` |
+| 퍼블릭 IP | `54.180.148.80` (2026-10-29 재캐처 시연 당시. 인스턴스 종료 후 반납된다) |
+| 접속 URL (A) | `http://54.180.148.80/` |
+| 헬스체크 URL (B) | `http://54.180.148.80/health` |
 | 기대 응답 | `200 OK` / 본문 `OK` |
 
 > 같은 날 **구축→검증→정리 사이클을 3회 반복**했고 3회 모두 `PASS 18 / FAIL 0 / SKIP 0` 였다
 > (회차별 IP·리소스 ID·멱등성 확인은 [`docs/verification-3x.md`](docs/verification-3x.md)).
-> 리소스를 지웠으므로 위 IP 는 **지금은 응답하지 않는다** — 증거는 같은 폴더의 `verification.txt` 와 `screenshots/` 에 있다.
+> 위 IP 는 그 뒤 **브라우저 주소창 캡처**를 위해 한 번 더 띄운 회차의 것이고, 리소스를 지웠으므로 **지금은 응답하지 않는다** —
+> 증거는 같은 폴더의 `verification.txt` 와 `screenshots/` 에 있다.
 
 ```bash
-$ curl -si http://3.38.94.117/health
+$ curl -si http://54.180.148.80/health
 HTTP/1.1 200 OK
 Server: nginx/1.30.6
-Date: Wed, 28 Oct 2026 16:26:41 GMT
+Date: Thu, 29 Oct 2026 10:51:40 GMT
 Content-Type: text/plain
 Content-Length: 3
 Connection: keep-alive
@@ -738,7 +739,9 @@ OK
 
 전체 판정은 [`docs/verification.txt`](docs/verification.txt) 에 있다 — `결과: PASS 18 / FAIL 0 / SKIP 0`, 종료 코드 0.
 
-스크린샷은 [`docs/screenshots/`](docs/screenshots/) 에 넣는다 (넣을 목록은 그 폴더의 README 참고).
+스크린샷은 [`docs/screenshots/`](docs/screenshots/) 에 실제 콘솔·브라우저 캡처로 들어 있다 —
+주소창이 보이는 `01-browser.png`·`02-health.png`, EC2·보안 그룹·라우팅 테이블·IAM 4장
+(계정 ID는 검은 사각형으로 가렸다). 목록과 각 장의 증명 범위는 그 폴더의 README 참고.
 
 ---
 

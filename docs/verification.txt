@@ -1,6 +1,6 @@
 ==============================================================
  codyssey B6-1 요구사항 검증
- 실행 시각 : 2026-10-29 01:26:44 KST
+ 실행 시각 : 2026-10-29 19:51:19 KST
  리전      : ap-northeast-2
  계정      : 304592343333
  실행 주체 : arn:aws:iam::304592343333:user/codyssey
@@ -12,16 +12,16 @@
 [PASS] B6-1-N2      Public Subnet 1개 존재
        B6-1-N2      Subnet CIDR / 퍼블릭 IP 자동할당: 10.0.1.0/24 True
 [PASS] B6-1-N3      Internet Gateway 가 VPC 에 연결됨
-       B6-1-N3      IGW → VPC: igw-05594d654fb2c9032 → vpc-094146a4a3623a90a
+       B6-1-N3      IGW → VPC: igw-06b4060d5b31e0050 → vpc-0b71924e37d97c07d
 [PASS] B6-1-N4      Route Table 에 0.0.0.0/0 → IGW 경로 존재
-       B6-1-N4      기본 경로: 0.0.0.0/0 → igw-05594d654fb2c9032
+       B6-1-N4      기본 경로: 0.0.0.0/0 → igw-06b4060d5b31e0050
 [PASS] B6-1-N6      Route Table 이 Public Subnet 에 연결됨
-       B6-1-N6      서브넷 연결: rtb-00b3f106ff3f0cb09 → subnet-0e0cd659bb8386a64
+       B6-1-N6      서브넷 연결: rtb-08eb174d165e5dff7 → subnet-0f467b3cfed794273
 
 ── 컴퓨트 및 웹 서버 ─────────────────────────────────────────
 [PASS] B6-1-E1      EC2 인스턴스 1대가 running
-       B6-1-E1      인스턴스: i-0e1cb39e83d903c5c (t3.micro, running)
-       B6-1-L3      루트 EBS: vol-06e6cf6de77895c5d 8 gp3
+       B6-1-E1      인스턴스: i-0351ca09a1dfecf29 (t3.micro, running)
+       B6-1-L3      루트 EBS: vol-0a3c777984aad389d 8 gp3
 
 ── 접근 제어(보안 그룹) ──────────────────────────────────────
 [PASS] B6-1-S1      인바운드가 필요한 포트(80, 22)로만 열려 있다
@@ -37,13 +37,13 @@
               그 자체가 최소권한이 지켜지고 있다는 신호이며, 콘솔에서 눈으로 확인하세요.
 
 ── 외부 접속 검증 ────────────────────────────────────────────
-[PASS] B6-1-X2      (A) 브라우저 접속: http://3.38.94.117/ → 200
+[PASS] B6-1-X2      (A) 브라우저 접속: http://54.180.148.80/ → 200
        B6-1-X2      응답 코드: 200
 [PASS] B6-1-X3      (B) 헬스체크: GET /health → 200
        B6-1-X3      응답: 200 "OK"
 
 ── 인스턴스 내부 검증 (SSH 필요) ─────────────────────────────
-[PASS] B6-1-E2      SSH 접속 성공 (ec2-user@3.38.94.117)
+[PASS] B6-1-E2      SSH 접속 성공 (ec2-user@54.180.148.80)
 [PASS] B6-1-E4      인스턴스에서 curl http://localhost → 200
        B6-1-E4      응답 코드: 200
 [PASS] B6-1-E3      웹 서버(nginx) 실행 중

@@ -68,24 +68,24 @@ bash infra/99_cleanup.sh --yes    # 확인 없이 진행
 
 ```text
 삭제 대상 (태그 Project=codyssey-b6-1)
-  EC2 인스턴스      i-0e1cb39e83d903c5c
-  Security Group    sg-042b569bbb7fc1c8a
-  Route Table       rtb-00b3f106ff3f0cb09
-  Internet Gateway  igw-05594d654fb2c9032
-  Subnet            subnet-0e0cd659bb8386a64
-  VPC               vpc-094146a4a3623a90a
+  EC2 인스턴스      i-0351ca09a1dfecf29
+  Security Group    sg-0fafe974baade1339
+  Route Table       rtb-08eb174d165e5dff7
+  Internet Gateway  igw-06b4060d5b31e0050
+  Subnet            subnet-0f467b3cfed794273
+  VPC               vpc-0b71924e37d97c07d
   키페어            codyssey-b6-1-key (로컬 …/infra/codyssey-b6-1-key.pem)
 
-[ OK ] 인스턴스 종료 요청: i-0e1cb39e83d903c5c
+[ OK ] 인스턴스 종료 요청: i-0351ca09a1dfecf29
 [INFO] terminated 상태 대기 중... (몇 분 걸릴 수 있습니다)
 [ OK ] 인스턴스 종료 확인
-[ OK ] Security Group 삭제: sg-042b569bbb7fc1c8a
-[ OK ] 라우트 테이블 연결 해제: rtbassoc-0bb04633bb9fca8f9
-[ OK ] Route Table 삭제: rtb-00b3f106ff3f0cb09
-[ OK ] IGW 분리(Detach): igw-05594d654fb2c9032
-[ OK ] IGW 삭제: igw-05594d654fb2c9032
-[ OK ] Subnet 삭제: subnet-0e0cd659bb8386a64
-[ OK ] VPC 삭제: vpc-094146a4a3623a90a
+[ OK ] Security Group 삭제: sg-0fafe974baade1339
+[ OK ] 라우트 테이블 연결 해제: rtbassoc-07437fca8b2ad8b93
+[ OK ] Route Table 삭제: rtb-08eb174d165e5dff7
+[ OK ] IGW 분리(Detach): igw-06b4060d5b31e0050
+[ OK ] IGW 삭제: igw-06b4060d5b31e0050
+[ OK ] Subnet 삭제: subnet-0f467b3cfed794273
+[ OK ] VPC 삭제: vpc-0b71924e37d97c07d
 [ OK ] 키페어 삭제: codyssey-b6-1-key
 [ OK ] 로컬 키 파일 삭제: …/infra/codyssey-b6-1-key.pem
 
@@ -107,20 +107,17 @@ bash infra/99_cleanup.sh --yes    # 확인 없이 진행
 
 ```text
 EC2:     []            ← 필터에 running/stopped 계열을 넣은 조회. 0건
-EBS:     []
-EIP:     []
-IGW:     []
-VPC:     []
+EBS:     []            EIP: []      IGW: []      VPC: []      Security Group: []
 KeyPair: InvalidKeyPair.NotFound  (키페어 'codyssey-b6-1-key' does not exist)
-웹 접속: 000  (http://3.38.94.117/health 연결 실패 — 인스턴스가 사라졌으므로 정상)
+웹 접속: 000  (http://54.180.148.80/health 연결 실패 — 인스턴스가 사라졌으므로 정상)
+infra/.state: 없음 / infra/*.pem: 없음
 ```
 
-> **종료된 인스턴스는 목록에 남는다.** 태그만으로 `describe-instances` 를 조회하면 `i-0e1cb39e83d903c5c` 가
-> 아직 보인다(실측). `State.Name` 은 `terminated`, `StateTransitionReason` 은
-> `User initiated (2026-10-28 19:52:31 GMT)` 다. **terminated 는 과금되지 않고**,
+> **종료된 인스턴스는 목록에 남는다.** 태그만으로 `describe-instances` 를 조회하면 캡처용 회차의 `i-0351ca09a1dfecf29` 가
+> 아직 보인다(실측, 2026-10-29 11:15:39 GMT 종료). `State.Name` 은 `terminated` 다. **terminated 는 과금되지 않고**,
 > 레코드는 약 1시간 뒤 사라진다. 정리 스크립트가 상태 필터를 넣은 이유가 이것이다.
 
-정리 날짜: `2026-10-29`
+정리 날짜: `2026-10-29` (3회 반복 검증 뒤, 캡처용 4회차 정리)
 확인한 사람: 오너 승인 하에 pi 에이전트가 `infra/99_cleanup.sh --yes` 실행 (종료 코드 0)
 Billing Dashboard 확인 여부: **☐ 확인하지 않음** — 실행 계정은 IAM 사용자 `codyssey` 이고 연결 정책에 결제 화면
 권한이 없다(`iam/codyssey-b6-1-policy.json` 에 billing 액션 없음). 계정은 Free plan 이라 초과 과금이 없는 구조지만,
